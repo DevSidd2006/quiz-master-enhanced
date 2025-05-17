@@ -356,20 +356,20 @@ function showRulesBeforeQuiz() {
         // Add animation class if needed
         rulesContainer.classList.add('animate-fade-in');
         // Attach event to "I Understand, Start Quiz!" button
-        const understandBtn = document.getElementById('understand-button');
-        if (understandBtn) {
-            understandBtn.onclick = () => {
-                rulesContainer.classList.add('hidden');
-                startQuizCore();
-            };
-        }
+    const understandBtn = document.getElementById('understand-button');
+    if (understandBtn) {
+        understandBtn.onclick = () => {
+            rulesContainer.classList.add('hidden');
+            startQuizCore();
+        };
+    }
     }
 }
 
 // Core quiz start logic (separated from button click)
-function startQuizCore() {
-    const theme = themeSelect.value;
-    const level = levelSelect.value;
+function startQuizCore(theme, level) {
+    if (!theme) theme = themeSelect.value;
+    if (!level) level = levelSelect.value;
     const username = document.getElementById('username').value.trim();
     if (!username) {
         alert('Please enter a username before starting the quiz.');
@@ -833,8 +833,10 @@ function toggleTheme() {
         const icon = themeToggle.querySelector('svg');
         if (icon) {
             if (isDarkTheme) {
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+                // Sun icon for dark mode (to switch to light)
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
             } else {
+                // Moon icon for light mode (to switch to dark)
                 icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />';
             }
         }
@@ -849,7 +851,8 @@ function initializeTheme() {
         if (themeToggle) {
             const icon = themeToggle.querySelector('svg');
             if (icon) {
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
+                // Sun icon for dark mode (to switch to light)
+                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
             }
         }
     }
@@ -865,11 +868,11 @@ function showRules(theme, level) {
         // Add animation class
         rulesContainer.classList.add('animate-fade-in');
         // Attach event to "I Understand, Start Quiz!" button
-        const startBtn = document.getElementById('rules-start-button');
-        if (startBtn) {
-            startBtn.onclick = function() {
+        const understandBtn = document.getElementById('understand-button');
+        if (understandBtn) {
+            understandBtn.onclick = function() {
                 rulesContainer.classList.add('hidden');
-                startQuiz(theme, level);
+                startQuizCore(theme, level);
             };
         }
     } else {
@@ -894,10 +897,9 @@ function showRules(theme, level) {
         
         modal.appendChild(content);
         document.body.appendChild(modal);
-        
-        document.getElementById('modal-start-button').addEventListener('click', () => {
+          document.getElementById('modal-start-button').addEventListener('click', () => {
             document.body.removeChild(modal);
-            startQuiz(theme, level);
+            startQuizCore(theme, level);
         });
     }
 }
@@ -923,9 +925,8 @@ function showResultsPage(finalScore) {
                 showContainer(landingPage);
                 resetQuizState();
             };
-        }
-        // View profile button
-        const viewProfileBtn = resultsPage.querySelector('button[onclick*="showContainer(profilePage)"]');
+        }        // View profile button
+        const viewProfileBtn = document.getElementById('view-profile-btn');
         if (viewProfileBtn) {
             viewProfileBtn.onclick = function() {
                 window.location.href = 'profile.html';

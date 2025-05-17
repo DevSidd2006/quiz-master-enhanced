@@ -66,13 +66,44 @@ class ProfileManager {
                 }
             });
         }
-    }
-
-    updateProfileDisplay() {
+    }    updateProfileDisplay() {
         // Profile header
         const profile = this.profileData;
-        document.getElementById('profile-username').textContent = profile.username || 'Username';
-        // Optionally, display email somewhere if needed
+        
+        // Safely update text elements by checking if they exist first
+        const usernameElement = document.getElementById('profile-username');
+        if (usernameElement) {
+            usernameElement.textContent = profile.username || 'Guest User';
+        }
+        
+        // Safely update join date
+        const joinDateElement = document.getElementById('profile-join-date');
+        if (joinDateElement && profile.memberSince) {
+            try {
+                const date = new Date(profile.memberSince);
+                const options = { year: 'numeric', month: 'long' };
+                joinDateElement.textContent = date.toLocaleDateString(undefined, options);
+            } catch (e) {
+                joinDateElement.textContent = 'May 2025';
+            }
+        }
+        
+        // Update statistics
+        const totalScoreElement = document.getElementById('profile-total-score');
+        if (totalScoreElement) {
+            totalScoreElement.textContent = profile.totalScore || '0';
+        }
+        
+        const quizzesCompletedElement = document.getElementById('profile-quizzes-completed');
+        if (quizzesCompletedElement) {
+            quizzesCompletedElement.textContent = profile.totalQuizzes || '0';
+        }
+        
+        const averageScoreElement = document.getElementById('profile-average-score');
+        if (averageScoreElement) {
+            averageScoreElement.textContent = profile.averageScore || '0';
+        }
+        
         // Update avatar
         const avatarImg = document.getElementById('profile-avatar');
         if (this.profileData.avatar && avatarImg) {
@@ -156,10 +187,42 @@ class ProfileManager {
 
 // Initialize profile manager when the page loads
 document.addEventListener('DOMContentLoaded', () => {
-    // Show registration modal if not registered
-    const profile = JSON.parse(localStorage.getItem('userProfile'));
-    if (!profile || !profile.username || !profile.email) {
-        window.location.href = 'index.html'; // Force registration on main page
+    // Check if profile exists
+    const profileData = localStorage.getItem('userProfile');
+    let profile = null;
+    
+    if (profileData) {
+        try {
+            profile = JSON.parse(profileData);
+        } catch (e) {
+            console.error('Error parsing profile data:', e);
+        }
     }
+    
+    // Only redirect if there's definitely no profile
+    if (!profile) {
+        console.log('No profile found, creating default profile');
+        // Instead of redirecting, create a default profile
+        const defaultProfile = {
+            username: 'Guest User',
+            email: 'guest@example.com',
+            memberSince: new Date().toISOString(),
+            totalQuizzes: 0,
+            highestScore: 0,
+            averageScore: 0,
+            totalScore: 0,
+            totalCorrect: 0,
+            totalIncorrect: 0,
+            totalStreakBonus: 0,
+            totalHintsUsed: 0,
+            totalPowerUpsUsed: 0,
+            achievements: [],
+            recentActivity: [],
+            lastQuiz: null
+        };
+        localStorage.setItem('userProfile', JSON.stringify(defaultProfile));
+    }
+    
+    // Initialize profile manager regardless
     window.profileManager = new ProfileManager();
 });
