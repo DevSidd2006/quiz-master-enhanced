@@ -70,8 +70,9 @@ class ProfileManager {
 
     updateProfileDisplay() {
         // Profile header
-        document.getElementById('profile-username').textContent = this.profileData.username;
-        // Remove profile-initial update (not used in UI)
+        const profile = this.profileData;
+        document.getElementById('profile-username').textContent = profile.username || 'Username';
+        // Optionally, display email somewhere if needed
         // Update avatar
         const avatarImg = document.getElementById('profile-avatar');
         if (this.profileData.avatar && avatarImg) {
@@ -155,5 +156,10 @@ class ProfileManager {
 
 // Initialize profile manager when the page loads
 document.addEventListener('DOMContentLoaded', () => {
+    // Show registration modal if not registered
+    const profile = JSON.parse(localStorage.getItem('userProfile'));
+    if (!profile || !profile.username || !profile.email) {
+        window.location.href = 'index.html'; // Force registration on main page
+    }
     window.profileManager = new ProfileManager();
 });

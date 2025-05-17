@@ -613,9 +613,147 @@
         .nav-button:hover::before {
             left: 100%;
         }
+
+        /* Registration Modal */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.7);
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .modal-content {
+            background: #fff;
+            border-radius: 8px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .modal-close {
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: #aaa;
+            transition: color 0.3s ease;
+        }
+
+        .modal-close:hover {
+            color: #666;
+        }
+
+        .modal-body {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 0.5rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 4px;
+            font-weight: 500;
+            text-align: center;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #764ba2, #667eea);
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #333;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 1rem;
+            transition: border 0.3s ease;
+        }
+
+        .input-field:focus {
+            border-color: #667eea;
+            outline: none;
+        }
+
+        /* End Registration Modal */
     </style>
 </head>
 <body>
+    <!-- Registration Modal -->
+    <div id="registration-modal" class="modal" style="display:none;">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">Register to QuizMaster</h2>
+                <span class="modal-close" id="close-modal">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="registration-form" class="space-y-6">
+                    <div class="input-group">
+                        <label for="reg-username" class="input-label">Username</label>
+                        <input type="text" id="reg-username" class="input-field" placeholder="Enter your username" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="reg-email" class="input-label">Email</label>
+                        <input type="email" id="reg-email" class="input-field" placeholder="Enter your email" required>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button id="register-button" class="btn btn-primary">
+                    Register
+                </button>
+            </div>
+        </div>
+    </div>
+    <!-- End Registration Modal -->
+
     <div id="app">
         <nav class="nav-bar fixed top-0 left-0 right-0 z-50 px-6 py-4">
             <div class="max-w-7xl mx-auto flex justify-between items-center">
@@ -626,6 +764,7 @@
                     </div>
                 </div>
                 <div class="flex items-center space-x-5">
+                    <span id="navbar-username" class="text-lg font-semibold text-indigo-700 dark:text-indigo-300"></span>
                     <a href="profile.html" class="nav-button bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-2.5 px-5 rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 font-medium">
                         <span class="flex items-center">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

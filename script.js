@@ -690,168 +690,91 @@ function resetLeaderboard() {
     }
 }
 
-// Initialize profile from localStorage
-function initializeProfile() {
-    const storedProfile = localStorage.getItem('userProfile');
-    if (storedProfile) {
-        userProfile = JSON.parse(storedProfile);
-    }
+// Registration and user display logic
+// Show registration modal if not registered
+function showRegistrationModal() {
+    const modal = document.getElementById('registration-modal');
+    if (modal) modal.style.display = 'flex';
 }
 
-// Save profile to localStorage
-function saveProfile() {
-    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+function hideRegistrationModal() {
+    const modal = document.getElementById('registration-modal');
+    if (modal) modal.style.display = 'none';
 }
 
-// Update profile with new quiz data
-function updateProfile(score, theme, level) {
-    const username = document.getElementById('username').value.trim();
-    if (!username) return;
+function saveUserProfile(username, email) {
+    const profile = {
+        username: username,
+        email: email,
+        memberSince: new Date().toISOString(),
+        totalQuizzes: 0,
+        highestScore: 0,
+        averageScore: 0,
+        totalScore: 0,
+        totalCorrect: 0,
+        totalIncorrect: 0,
+        totalStreakBonus: 0,
+        totalHintsUsed: 0,
+        totalPowerUpsUsed: 0,
+        achievements: [],
+        recentActivity: [],
+        lastQuiz: null
+    };
+    localStorage.setItem('userProfile', JSON.stringify(profile));
+    return profile;
+}
 
-    // Initialize profile if it's a new user
-    if (!userProfile.username) {
-        userProfile = {
-            username: username,
-            memberSince: new Date().toISOString(),
-            totalQuizzes: 0,
-            highestScore: 0,
-            averageScore: 0,
-            totalScore: 0,
-            totalCorrect: 0,
-            totalIncorrect: 0,
-            totalStreakBonus: 0,
-            totalHintsUsed: 0,
-            totalPowerUpsUsed: 0,
-            achievements: [],
-            recentActivity: [],
-            lastQuiz: null
-        };
+function getUserProfile() {
+    const stored = localStorage.getItem('userProfile');
+    if (stored) return JSON.parse(stored);
+    return null;
+}
+
+function updateUsernameDisplay() {
+    const profile = getUserProfile();
+    if (!profile) return;
+    // Navbar
+    const navbarUsername = document.getElementById('navbar-username');
+    if (navbarUsername) navbarUsername.textContent = profile.username;
+    // Landing page input
+    const usernameInput = document.getElementById('username');
+    if (usernameInput) usernameInput.value = profile.username;
+    // Results page (if you want to show username)
+    // Add more places as needed
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Registration modal logic
+    const profile = getUserProfile();
+    if (!profile || !profile.username || !profile.email) {
+        showRegistrationModal();
     } else {
-        // Always update username and memberSince if missing
-        if (!userProfile.username) userProfile.username = username;
-        if (!userProfile.memberSince) userProfile.memberSince = new Date().toISOString();
+        updateUsernameDisplay();
     }
 
-    // Update profile data
-    userProfile.totalQuizzes = (userProfile.totalQuizzes || 0) + 1;
-    userProfile.highestScore = Math.max(userProfile.highestScore || 0, score);
-    userProfile.totalScore = (userProfile.totalScore || 0) + score;
-    userProfile.averageScore = userProfile.totalScore / userProfile.totalQuizzes;
-    userProfile.lastQuiz = new Date().toISOString();
-    userProfile.totalCorrect = (userProfile.totalCorrect || 0) + correctAnswers;
-    userProfile.totalIncorrect = (userProfile.totalIncorrect || 0) + incorrectAnswers;
-    userProfile.totalStreakBonus = (userProfile.totalStreakBonus || 0) + totalStreakBonus;
-    userProfile.totalHintsUsed = (userProfile.totalHintsUsed || 0) + hintsUsed;
-    userProfile.totalPowerUpsUsed = (userProfile.totalPowerUpsUsed || 0) + powerUpsUsed;
-
-    // Achievements logic
-    if (!userProfile.achievements.includes('first_quiz') && userProfile.totalQuizzes === 1) {
-        userProfile.achievements.push('first_quiz');
-    }
-    if (!userProfile.achievements.includes('streak_master') && streak >= 5) {
-        userProfile.achievements.push('streak_master');
-    }
-    // Top 10 achievement (check leaderboard)
-    const leaderboard = JSON.parse(localStorage.getItem('leaderboardData') || '{"scores":[]}');
-    const sorted = leaderboard.scores.sort((a, b) => b.score - a.score);
-    const top10 = sorted.slice(0, 10).map(e => e.username);
-    if (!userProfile.achievements.includes('top_10') && top10.includes(username)) {
-        userProfile.achievements.push('top_10');
-    }
-
-    // Add to recent activity
-    userProfile.recentActivity.unshift({
-        type: 'quiz',
-        score: score,
-        theme: theme,
-        level: level,
-        timestamp: new Date().toISOString(),
-        correctAnswers: correctAnswers,
-        incorrectAnswers: incorrectAnswers,
-        totalQuestions: currentQuiz.length,
-        timeTaken: 15 * currentQuiz.length - totalTimeBonus,
-        streak: streak,
-        hintsUsed: hintsUsed,
-        powerUpsUsed: powerUpsUsed
-    });
-
-    // Keep only last 5 activities
-    if (userProfile.recentActivity.length > 5) {
-        userProfile.recentActivity = userProfile.recentActivity.slice(0, 5);
-    }
-
-    // Save profile to localStorage
-    localStorage.setItem('userProfile', JSON.stringify(userProfile));
-}
-
-// Update profile display
-function updateProfileDisplay() {
-    const profilePage = document.getElementById('profile-page');
-    if (!profilePage) return;
-
-    // Update profile header
-    document.getElementById('profile-initial').textContent = userProfile.username.charAt(0).toUpperCase();
-    document.getElementById('profile-username').textContent = userProfile.username;
-    document.getElementById('profile-username-detail').textContent = userProfile.username;
-
-    // Update stats
-    document.getElementById('total-quizzes').textContent = userProfile.totalQuizzes;
-    document.getElementById('highest-score').textContent = userProfile.highestScore;
-    document.getElementById('average-score').textContent = Math.round(userProfile.averageScore);
-
-    // Update member since
-    const memberSince = new Date(userProfile.memberSince);
-    document.getElementById('member-since').textContent = memberSince.toLocaleDateString();
-
-    // Update last quiz
-    if (userProfile.lastQuiz) {
-        const lastQuiz = new Date(userProfile.lastQuiz);
-        document.getElementById('last-quiz').textContent = lastQuiz.toLocaleDateString();
-    }
-
-    // Update recent activity
-    const activityList = document.getElementById('recent-activity-list');
-    activityList.innerHTML = userProfile.recentActivity.map(activity => `
-        <div class="activity-item bg-gray-50 dark:bg-gray-700 p-4 rounded-lg transform hover:scale-105 transition-transform duration-300">
-            <div class="flex justify-between items-center">
-                <div>
-                    <span class="font-semibold text-indigo-600 dark:text-indigo-400">${activity.theme} Quiz</span>
-                    <span class="text-gray-500 dark:text-gray-400"> (${activity.level})</span>
-                </div>
-                <div class="text-right">
-                    <div class="text-lg font-bold text-green-600">${activity.score} points</div>
-                    <div class="text-sm text-gray-500 dark:text-gray-400">
-                        ${new Date(activity.timestamp).toLocaleDateString()}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `).join('');
-}
-
-// Add 3D hover effects to cards
-function add3DEffects() {
-    const cards = document.querySelectorAll('.card');
-    cards.forEach(card => {
-        card.addEventListener('mousemove', (e) => {
-            const rect = card.getBoundingClientRect();
-            const x = e.clientX - rect.left;
-            const y = e.clientY - rect.top;
-
-            const centerX = rect.width / 2;
-            const centerY = rect.height / 2;
-
-            const rotateX = (y - centerY) / 10;
-            const rotateY = (centerX - x) / 10;
-
-            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.05, 1.05, 1.05)`;
+    // Registration form submit
+    const regForm = document.getElementById('registration-form');
+    if (regForm) {
+        regForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value.trim();
+            const email = document.getElementById('reg-email').value.trim();
+            if (!username || !email) return;
+            saveUserProfile(username, email);
+            updateUsernameDisplay();
+            hideRegistrationModal();
         });
+    }
 
-        card.addEventListener('mouseleave', () => {
-            card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
-        });
-    });
-}
+    // Optional: close modal with X
+    const closeModal = document.getElementById('close-modal');
+    if (closeModal) {
+        closeModal.addEventListener('click', hideRegistrationModal);
+    }
+
+    // Update username everywhere on page load
+    updateUsernameDisplay();
+});
 
 // Initialize everything when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
