@@ -99,7 +99,12 @@ function initializeDOMElements() {
 
     // Add event listener for start quiz button
     if (startQuizButton) {
-        startQuizButton.addEventListener('click', startQuiz);
+        startQuizButton.addEventListener('click', function() {
+            // Show rules before starting the quiz
+            const theme = themeSelect.value;
+            const level = levelSelect.value;
+            showRules(theme, level);
+        });
     }
 }
 
@@ -339,43 +344,48 @@ function showQuestion() {
 
 // Modify startQuiz function to check for username
 function startQuiz() {
+    showRulesBeforeQuiz();
+}
+
+// Show rules before starting the quiz
+function showRulesBeforeQuiz() {
+    const rulesContainer = document.getElementById('rules-container');
+    if (rulesContainer) {
+        hideAllContainers();
+        rulesContainer.classList.remove('hidden');
+        // Add animation class if needed
+        rulesContainer.classList.add('animate-fade-in');
+        // Attach event to "I Understand, Start Quiz!" button
+        const understandBtn = document.getElementById('understand-button');
+        if (understandBtn) {
+            understandBtn.onclick = () => {
+                rulesContainer.classList.add('hidden');
+                startQuizCore();
+            };
+        }
+    }
+}
+
+// Core quiz start logic (separated from button click)
+function startQuizCore() {
     const theme = themeSelect.value;
     const level = levelSelect.value;
     const username = document.getElementById('username').value.trim();
-    
-    // Validate username
     if (!username) {
         alert('Please enter a username before starting the quiz.');
         return;
     }
-    
-    // Reset quiz state
     resetQuizState();
-    
-    // Show quiz container
     showContainer(quizContainer);
-    
-    // Show loading spinner
     const loadingSpinner = document.createElement('div');
     loadingSpinner.className = 'loading-spinner';
     quizContainer.appendChild(loadingSpinner);
-    
-    // Load questions (simulating API call with setTimeout)
     setTimeout(() => {
-        // Remove spinner
         quizContainer.removeChild(loadingSpinner);
-        
-        // Get questions for selected theme and level
         currentQuiz = getRandomQuestions(theme, level, 5);
-        
-        // Show first question
         showQuestion();
         updateProgressBar();
-        
-        // Start timer
         startTimer();
-        
-        // Update score display
         scoreElement.textContent = `Score: ${score}`;
     }, 1500);
 }
@@ -454,11 +464,10 @@ function selectAnswer(index) {
 
 function showNextQuestion() {
     currentQuestionIndex++;
-    
     if (currentQuestionIndex < currentQuiz.length) {
         showQuestion();
     } else {
-        endQuiz();
+        endQuiz(); // Ensure this is called after the last question
     }
 }
 
@@ -516,41 +525,53 @@ function handleTimeUp() {
 
 function endQuiz() {
     clearInterval(timer);
-    
     // Calculate final score and stats
     const finalScore = score;
-    const accuracy = (correctAnswers / currentQuiz.length) * 100;
+    const accuracy = Math.round((correctAnswers / currentQuiz.length) * 100);
     const timeTaken = 15 * currentQuiz.length - totalTimeBonus;
-    
-    // Update profile with quiz results
-    const username = document.getElementById('username').value.trim();
-    const theme = themeSelect.value;
-    const level = levelSelect.value;
-    
-    // Update user profile
-    updateProfile(finalScore, theme, level);
-    
+    // Update user profile in localStorage
+    const profile = getUserProfile();
+    if (profile) {
+        profile.totalQuizzes = (profile.totalQuizzes || 0) + 1;
+        profile.totalScore = (profile.totalScore || 0) + finalScore;
+        profile.highestScore = Math.max(profile.highestScore || 0, finalScore);
+        profile.averageScore = Math.round(profile.totalScore / profile.totalQuizzes);
+        profile.totalCorrect = (profile.totalCorrect || 0) + correctAnswers;
+        profile.totalIncorrect = (profile.totalIncorrect || 0) + incorrectAnswers;
+        profile.totalStreakBonus = (profile.totalStreakBonus || 0) + totalStreakBonus;
+        profile.totalHintsUsed = (profile.totalHintsUsed || 0) + hintsUsed;
+        profile.totalPowerUpsUsed = (profile.totalPowerUpsUsed || 0) + powerUpsUsed;
+        profile.lastQuiz = {
+            score: finalScore,
+            correct: correctAnswers,
+            incorrect: incorrectAnswers,
+            timeTaken,
+            accuracy,
+            theme: themeSelect.value,
+            level: levelSelect.value,
+            date: new Date().toISOString()
+        };
+        // Add to recent activity
+        profile.recentActivity = profile.recentActivity || [];
+        profile.recentActivity.unshift({
+            type: 'quiz',
+            theme: themeSelect.value,
+            level: levelSelect.value,
+            score: finalScore,
+            correct: correctAnswers,
+            timeTaken,
+            accuracy,
+            timestamp: new Date().toISOString()
+        });
+        // Limit recent activity to 20
+        if (profile.recentActivity.length > 20) profile.recentActivity = profile.recentActivity.slice(0, 20);
+        localStorage.setItem('userProfile', JSON.stringify(profile));
+    }
     // Show results page
-    const resultsPage = document.getElementById('results-page');
-    if (resultsPage) {
-        resultsPage.classList.remove('hidden');
-        quizContainer.classList.add('hidden');
-        
-        // Update results display
-        document.getElementById('final-score').textContent = finalScore;
-        document.getElementById('correct-answers').textContent = correctAnswers;
-        document.getElementById('time-taken').textContent = `${timeTaken}s`;
-        document.getElementById('accuracy').textContent = `${Math.round(accuracy)}%`;
-        
-        // Add event listener for restart button
-        const restartBtn = document.getElementById('restart-quiz');
-        if (restartBtn) {
-            restartBtn.onclick = () => {
-                resultsPage.classList.add('hidden');
-                showContainer(landingPage);
-                resetQuizState();
-            };
-        }
+    showResultsPage(finalScore);
+    // Update profile page if open
+    if (window.profileManager && typeof window.profileManager.updateProfileDisplay === 'function') {
+        window.profileManager.updateProfileDisplay();
     }
 }
 
@@ -831,6 +852,14 @@ function showRules(theme, level) {
         
         // Add animation class
         rulesContainer.classList.add('animate-fade-in');
+        // Attach event to "I Understand, Start Quiz!" button
+        const startBtn = document.getElementById('rules-start-button');
+        if (startBtn) {
+            startBtn.onclick = function() {
+                rulesContainer.classList.add('hidden');
+                startQuiz(theme, level);
+            };
+        }
     } else {
         // If rules container is not found, create a simple modal with rules
      const modal = document.createElement('div');
@@ -847,7 +876,7 @@ function showRules(theme, level) {
                 <li>Use powerups wisely to improve your score</li>
             </ul>
             <button id="modal-start-button" class="w-full bg-indigo-600 text-white py-2 px-4 rounded">
-                Start Quiz
+                I Understand, Start Quiz!
             </button>
         `;
         
@@ -861,6 +890,7 @@ function showRules(theme, level) {
     }
 }
 
+// Fix: Results page display logic
 function showResultsPage(finalScore) {
     // Hide quiz container
     quizContainer.classList.add('hidden');
@@ -873,13 +903,21 @@ function showResultsPage(finalScore) {
         document.getElementById('correct-answers').textContent = correctAnswers;
         document.getElementById('time-taken').textContent = `${15 * currentQuiz.length - totalTimeBonus}s`;
         document.getElementById('accuracy').textContent = `${Math.round((correctAnswers / currentQuiz.length) * 100)}%`;
-    }
-    // Add event listener for restart
-    const restartBtn = document.getElementById('restart-quiz');
-    if (restartBtn) {
-        restartBtn.onclick = () => {
-            resultsPage.classList.add('hidden');
-            showContainer(landingPage);
-        };
+        // Restart button
+        const restartBtn = document.getElementById('restart-quiz');
+        if (restartBtn) {
+            restartBtn.onclick = () => {
+                resultsPage.classList.add('hidden');
+                showContainer(landingPage);
+                resetQuizState();
+            };
+        }
+        // View profile button
+        const viewProfileBtn = resultsPage.querySelector('button[onclick*="showContainer(profilePage)"]');
+        if (viewProfileBtn) {
+            viewProfileBtn.onclick = function() {
+                window.location.href = 'profile.html';
+            };
+        }
     }
  }
