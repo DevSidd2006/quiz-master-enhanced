@@ -795,6 +795,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update username everywhere on page load
     updateUsernameDisplay();
+
+    // Fix: Attach event listener to the rules acknowledge button
+    const understandBtn = document.getElementById('understand-button');
+    if (understandBtn) {
+        understandBtn.onclick = function() {
+            document.getElementById('rules-container').classList.add('hidden');
+            // Start the quiz with selected theme and level
+            const theme = document.getElementById('theme').value;
+            const level = document.getElementById('level').value;
+            startQuiz(theme, level);
+        };
+    }
 });
 
 // Initialize everything when the DOM is loaded
