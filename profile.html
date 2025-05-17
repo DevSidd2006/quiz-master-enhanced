@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile | QuizMaster</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="./images/logo.png" type="image/png">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            background-size: 400% 400%;
+            animation: gradientBG 15s ease infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            padding-top: 80px;
+        }
+        @keyframes gradientBG {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .glass-card {
+            background: rgba(255,255,255,0.85);
+            box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border-radius: 2rem;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .profile-avatar {
+            box-shadow: 0 4px 24px 0 rgba(102,126,234,0.25);
+            border: 4px solid #764ba2;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .stat-card {
+            background: rgba(102,126,234,0.08);
+            border-radius: 1.25rem;
+            box-shadow: 0 2px 8px rgba(102,126,234,0.08);
+            transition: transform 0.2s;
+        }
+        .stat-card:hover {
+            transform: translateY(-4px) scale(1.04);
+            box-shadow: 0 8px 24px rgba(102,126,234,0.15);
+        }
+        .achievement-card {
+            background: rgba(255,255,255,0.7);
+            border-radius: 1.25rem;
+            box-shadow: 0 2px 8px rgba(102,126,234,0.08);
+            padding: 1.25rem;
+            text-align: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .achievement-card.locked {
+            filter: grayscale(1);
+            opacity: 0.6;
+        }
+        .achievement-card:hover {
+            transform: scale(1.05) rotate(-2deg);
+            box-shadow: 0 8px 24px rgba(102,126,234,0.15);
+        }
+        .achievement-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .settings-section label {
+            font-weight: 500;
+        }
+        @media (max-width: 768px) {
+            .glass-card { padding: 1.25rem; }
+            .stat-card, .achievement-card { padding: 1rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Theme Changer Floating Button -->
+    <button id="theme-changer-btn" title="Toggle Theme" class="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-4 rounded-full shadow-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center justify-center focus:outline-none">
+        <svg id="theme-changer-icon" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path id="theme-changer-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+    </button>
+    <div class="w-full max-w-3xl mx-auto mt-8 mb-12">
+        <a href="index.html" class="inline-flex items-center gap-2 px-5 py-2 mb-6 bg-gradient-to-r from-indigo-500 to-purple-500 text-white font-semibold rounded-full shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            Back to Main Page
+        </a>
+        <div class="glass-card p-8 md:p-12">
+            <!-- Profile Header -->
+            <div class="flex flex-col md:flex-row items-center md:items-start md:justify-between mb-10 gap-6">
+                <div class="flex items-center gap-6">
+                    <div class="relative">
+                        <img id="profile-avatar" src="images/default-avatar.png" alt="Profile Picture" class="profile-avatar w-28 h-28 rounded-full object-cover">
+                        <button id="avatar-upload-btn" title="Change Avatar" class="absolute bottom-2 right-2 bg-white bg-opacity-80 rounded-full p-2 shadow hover:bg-opacity-100 transition-all">
+                            <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828L18 9.828M7 7h.01"/></svg>
+                        </button>
+                        <input type="file" id="avatar-upload-input" accept="image/*" class="hidden">
+                    </div>
+                    <div>
+                        <h2 id="profile-username" class="text-3xl font-bold text-gray-800 mb-1">Username</h2>
+                        <div class="flex items-center gap-2 mb-1">
+                            <span id="profile-level" class="bg-yellow-400 text-gray-900 px-3 py-1 rounded-full text-xs font-bold">Level 1</span>
+                            <span class="text-sm text-gray-500">Joined <span id="profile-join-date">May 2025</span></span>
+                        </div>
+                        <span class="inline-block bg-gradient-to-r from-indigo-400 to-purple-400 text-white px-3 py-1 rounded-full text-xs font-semibold mt-1">QuizMaster</span>
+                    </div>
+                </div>
+                <button id="edit-profile" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-6 py-2 rounded-lg shadow-lg hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    Edit Profile
+                </button>
+            </div>
+
+            <!-- Stats Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <div class="stat-card p-6 text-center">
+                    <h3 class="text-lg font-semibold mb-2">Total Score</h3>
+                    <p id="profile-total-score" class="text-3xl font-bold text-indigo-600">0</p>
+                </div>
+                <div class="stat-card p-6 text-center">
+                    <h3 class="text-lg font-semibold mb-2">Quizzes Completed</h3>
+                    <p id="profile-quizzes-completed" class="text-3xl font-bold text-purple-600">0</p>
+                </div>
+                <div class="stat-card p-6 text-center">
+                    <h3 class="text-lg font-semibold mb-2">Average Score</h3>
+                    <p id="profile-average-score" class="text-3xl font-bold text-blue-600">0</p>
+                </div>
+            </div>
+
+            <!-- Achievements Section -->
+            <div class="mb-10">
+                <h3 class="text-2xl font-bold mb-4 text-gray-800">Achievements</h3>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="achievements-grid">
+                    <!-- Achievement cards will be dynamically added here -->
+                    <div class="achievement-card">
+                        <div class="achievement-icon">🎯</div>
+                        <h4 class="font-semibold">First Steps</h4>
+                        <p class="text-sm text-gray-600">Complete your first quiz</p>
+                    </div>
+                    <div class="achievement-card locked">
+                        <div class="achievement-icon">🌟</div>
+                        <h4 class="font-semibold">Easy Perfection</h4>
+                        <p class="text-sm text-gray-600">Get 100% on an easy quiz</p>
+                    </div>
+                    <div class="achievement-card">
+                        <div class="achievement-icon">🔥</div>
+                        <h4 class="font-semibold">Streak Master</h4>
+                        <p class="text-sm text-gray-600">Achieve a streak of 5 correct answers</p>
+                    </div>
+                    <div class="achievement-card locked">
+                        <div class="achievement-icon">🏅</div>
+                        <h4 class="font-semibold">Top 10</h4>
+                        <p class="text-sm text-gray-600">Reach the top 10 on the leaderboard</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="mb-10">
+                <h3 class="text-2xl font-bold mb-4 text-gray-800">Recent Activity</h3>
+                <div class="space-y-3" id="recent-activity">
+                    <div class="activity-item flex items-center gap-4 bg-white rounded-lg p-4 shadow-sm">
+                        <span class="bg-indigo-100 text-indigo-600 rounded-full px-3 py-1 text-xs font-semibold">Quiz</span>
+                        <span class="flex-1 text-gray-700">Completed "General Knowledge" quiz</span>
+                        <span class="text-xs text-gray-400">2 days ago</span>
+                    </div>
+                    <div class="activity-item flex items-center gap-4 bg-white rounded-lg p-4 shadow-sm">
+                        <span class="bg-purple-100 text-purple-600 rounded-full px-3 py-1 text-xs font-semibold">Achievement</span>
+                        <span class="flex-1 text-gray-700">Unlocked "First Steps"</span>
+                        <span class="text-xs text-gray-400">3 days ago</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Section -->
+            <div class="border-t border-gray-200 pt-8 settings-section">
+                <h3 class="text-2xl font-bold mb-4 text-gray-800">Settings</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3">Notifications</h4>
+                        <label class="flex items-center gap-3 mb-2">
+                            <input type="checkbox" class="form-checkbox h-5 w-5 text-indigo-600" checked>
+                            Achievement notifications
+                        </label>
+                        <label class="flex items-center gap-3">
+                            <input type="checkbox" class="form-checkbox h-5 w-5 text-indigo-600" checked>
+                            Leaderboard updates
+                        </label>
+                    </div>
+                    <div>
+                        <h4 class="text-lg font-semibold mb-3">Theme Preferences</h4>
+                        <div class="flex gap-3">
+                            <button class="theme-option w-12 h-12 rounded-full border-2 border-indigo-500" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%)"></button>
+                            <button class="theme-option w-12 h-12 rounded-full border-2 border-green-400" style="background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%)"></button>
+                            <button class="theme-option w-12 h-12 rounded-full border-2 border-pink-400" style="background: linear-gradient(135deg, #ff9a9e 0%, #fad0c4 100%)"></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+    <script>
+    // Theme Changer Button Logic
+    const themeBtn = document.getElementById('theme-changer-btn');
+    const iconPath = document.getElementById('theme-changer-icon-path');
+    function setTheme(dark) {
+        if (dark) {
+            document.body.classList.add('dark-theme');
+            iconPath.setAttribute('d', 'M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z');
+        } else {
+            document.body.classList.remove('dark-theme');
+            iconPath.setAttribute('d', 'M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z');
+        }
+        localStorage.setItem('darkTheme', dark);
+    }
+    // On load, set theme from localStorage
+    setTheme(localStorage.getItem('darkTheme') === 'true');
+    themeBtn.addEventListener('click', () => {
+        const isDark = document.body.classList.contains('dark-theme');
+        setTheme(!isDark);
+    });
+    </script>
+    <script src="profile.js"></script>
+</body>
+</html>
