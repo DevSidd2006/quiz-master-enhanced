@@ -1080,8 +1080,8 @@ const quizQuestions = {
                     "correct": 3
             }
         ]
-    },
-    history: {
+      },
+      history: {
         easy: [
             {
                 "question": "Who was the first President of the United States?",
@@ -1862,16 +1862,6 @@ const quizQuestions = {
             "correct": 0
           },
           {
-            "question": "Which sport involves a small white ball and a court divided by a net?",
-            "options": ["Tennis", "Badminton", "Volleyball", "Table Tennis"],
-            "correct": 0
-          },
-          {
-            "question": "What is the name of the famous golf tournament held at Augusta National Golf Club?",
-            "options": ["The Masters", "The Open Championship", "The US Open", "The PGA Championship"],
-            "correct": 0
-          },
-          {
             "question": "Which sport involves a small white ball and a course with 18 holes?",
             "options": ["Golf", "Mini Golf", "Croquet", "Bowling"],
             "correct": 0
@@ -1889,11 +1879,6 @@ const quizQuestions = {
           {
             "question": "What is the name of the famous tennis tournament held in Paris every year?",
             "options": ["French Open", "Wimbledon Championships", "US Open", "Australian Open"],
-            "correct": 0
-          },
-          {
-            "question": "Which sport involves a small white ball and a court with a net in the middle?",
-            "options": ["Tennis", "Badminton", "Volleyball", "Table Tennis"],
             "correct": 0
           },
           {
@@ -2001,6 +1986,11 @@ const quizQuestions = {
           {
             "question": "What is the name of the famous tennis tournament held in Paris every year?",
             "options": ["French Open", "Wimbledon Championships", "US Open", "Australian Open"],
+            "correct": 0
+          },
+          {
+            "question": "What is the name of the famous tennis tournament held in Melbourne every year?",
+            "options": ["Australian Open", "Wimbledon Championships", "US Open", "French Open"],
             "correct": 0
           }
         ]
@@ -2699,7 +2689,7 @@ const quizQuestions = {
                 "correct": 0
               }
             ],
-            meduim: [
+            medium: [
               {
                 "question": "Which programming language is known as the 'language of the web'?",
                 "options": ["Python", "Java", "JavaScript", "C++"],
@@ -3574,7 +3564,7 @@ const quizQuestions = {
               "correct": 1
             }
           ],
-          "medium": [
+          medium: [
             {
               "question": "What is the highest female singing voice called?",
               "options": ["Alto", "Soprano", "Tenor", "Bass"],
@@ -3676,7 +3666,7 @@ const quizQuestions = {
               "correct": 0
             }
           ],
-          "hard": [
+          hard: [
             {
               "question": "What is the name for a piece of music for a full orchestra, typically in four movements?",
               "options": ["Concerto", "Symphony", "Sonata", "Fugue"],
@@ -4038,7 +4028,7 @@ const quizQuestions = {
             },
             {
               "question": "Which vitamin is essential for calcium absorption?",
-              "options": ["Vitamin C", "Vitamin D", "Vitamin B12", "Vitamin E"],
+              "options": ["Vitamin C", "Vitamin B12", "Vitamin A", "Vitamin D"],
               "correct": 1
             },
             {
@@ -4448,4 +4438,4 @@ function getRandomQuestions(category, difficulty, count = 5) {
     return selectedQuestions;
 }
 
-export { quizQuestions, getRandomQuestions }; 
+export { quizQuestions, getRandomQuestions };

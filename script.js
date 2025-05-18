@@ -16,14 +16,16 @@ let timer;
 let timeLeft = 15;
 let userAnswers = [];
 let streak = 0;
-let timeBonus = 0;
-let totalTimeBonus = 0;
+let timeBonus = 0; // This seems to be for a single question
+let totalTimeBonus = 0; // Accumulates timeBonus over the quiz
 let hintsAvailable = 3;
-let powerUps = {
-    skip: 1,
-    timeFreeze: 1,
-    doublePoints: 1
-};
+let powerUps = { skip: 1, timeFreeze: 1, doublePoints: 1 };
+let correctAnswers = 0;
+let incorrectAnswers = 0;
+let skippedQuestions = 0;
+let hintsUsed = 0;
+let powerUpsUsed = 0;
+let totalStreakBonus = 0;
 
 // Add scoring constants
 const SCORING = {
@@ -37,12 +39,23 @@ const SCORING = {
 };
 
 // Add to quiz state variables
-let correctAnswers = 0;
-let incorrectAnswers = 0;
-let skippedQuestions = 0;
-let hintsUsed = 0;
-let powerUpsUsed = 0;
-let totalStreakBonus = 0; // Add this to track total streak bonus
+let userProfile = {
+    username: '',
+    email: '', // Added for registration
+    memberSince: null,
+    totalQuizzes: 0,
+    highestScore: 0,
+    averageScore: 0,
+    totalScore: 0,
+    totalCorrect: 0,
+    totalIncorrect: 0,
+    totalStreakBonus: 0,
+    totalHintsUsed: 0,
+    totalPowerUpsUsed: 0,
+    achievements: [],
+    recentActivity: [],
+    lastQuiz: null
+};
 
 // Update penalty constants
 const PENALTIES = {
@@ -55,882 +68,789 @@ const PENALTIES = {
 // DOM Elements
 let landingPage;
 let quizContainer;
-let themeSelect;
-let levelSelect;
-let startQuizButton;
-let questionElement;
-let optionsElement;
-let nextButton;
-let scoreElement;
-let timerElement;
-let themeToggle;
+let rulesContainer;
+let resultsPage;
+let profileModal; // Was profilePage, renamed for clarity as it's a modal in index.html
+let registrationModal;
 
-// Profile state variables
-let userProfile = {
-    username: '',
-    memberSince: null,
-    totalQuizzes: 0,
-    highestScore: 0,
-    averageScore: 0,
-    totalScore: 0,
-    totalCorrect: 0,
-    totalIncorrect: 0,
-    totalStreakBonus: 0,
-    totalHintsUsed: 0,
-    totalPowerUpsUsed: 0,
-    achievements: [], // e.g., ['first_quiz', 'streak_master', 'top_10']
-    recentActivity: [],
-    lastQuiz: null
-};
+let themeSelect; // Existing
+let levelSelect; // Existing
+let usernameInput; // For landing page username
+
+// Buttons
+let startQuizButton; // Existing
+let understandButton; // For rules page
+let viewProfileButton; // Navbar profile button
+let closeProfileModalButton;
+let playAgainButtonResults;
+let closeRegistrationModalButton;
+let registrationForm;
+let themeToggle; // Existing
+
+// Input fields for registration
+let usernameRegistrationInput;
+let emailRegistrationInput;
+
+// Display elements for results
+let finalScoreDisplay;
+let correctAnswersDisplayResults;
+let incorrectAnswersDisplayResults;
+let accuracyDisplayResults;
+let totalTimeBonusDisplayResults;
+
+// Display elements for profile modal
+let profileUsernameDisplay;
+let profileMemberSinceDisplay;
+let profileTotalQuizzesDisplay;
+let profileHighestScoreDisplay;
+let profileAverageScoreDisplay;
+
+// Elements dynamically created/referenced within showQuestion
+// let questionElement;
+// let optionsElement;
+// let nextButton;
+// let scoreElement; // For quiz score display
+// let timerElement; // For quiz timer display
+
+let isDoublePointsActive = false; // Flag for double points power-up
 
 // Initialize DOM elements
 function initializeDOMElements() {
     landingPage = document.getElementById('landing-page');
     quizContainer = document.getElementById('quiz-container');
+    rulesContainer = document.getElementById('rules-container');
+    resultsPage = document.getElementById('results-page');
+    profileModal = document.getElementById('profile-page'); // This is the modal container
+    registrationModal = document.getElementById('registration-modal');
+
     themeSelect = document.getElementById('theme');
     levelSelect = document.getElementById('level');
+    usernameInput = document.getElementById('username');
     startQuizButton = document.getElementById('start-quiz');
-    questionElement = document.getElementById('question');
-    optionsElement = document.getElementById('options');
-    nextButton = document.getElementById('next-button');
-    scoreElement = document.getElementById('score');
-    timerElement = document.getElementById('timer');
     themeToggle = document.getElementById('theme-toggle');
 
-    // Add event listener for start quiz button
+    understandButton = document.getElementById('understand-button');
+    viewProfileButton = document.getElementById('view-profile-btn'); // This ID should match the one in results page if it's the same button
+    closeProfileModalButton = document.getElementById('close-profile-modal-button');
+    playAgainButtonResults = document.getElementById('restart-quiz'); // Corrected ID from HTML
+    closeRegistrationModalButton = document.getElementById('close-modal'); // Corrected ID from HTML for registration modal close
+    registrationForm = document.getElementById('registration-form');
+    usernameRegistrationInput = document.getElementById('reg-username'); // Corrected ID from HTML
+    emailRegistrationInput = document.getElementById('reg-email'); // Corrected ID from HTML
+
+    finalScoreDisplay = document.getElementById('final-score'); // Corrected ID from HTML
+    correctAnswersDisplayResults = document.getElementById('correct-answers'); // Corrected ID from HTML
+    accuracyDisplayResults = document.getElementById('accuracy'); // Corrected ID from HTML
+    totalTimeBonusDisplayResults = document.getElementById('time-taken'); // This was time-taken, assuming it's for time bonus or total time
+
+    // Profile modal elements might need to be re-verified if profile.html was changed significantly
+    // For now, assuming these IDs are within a modal structure in index.html if profile page is merged
+    profileUsernameDisplay = document.getElementById('profile-username-display'); // Example ID, ensure it exists
+    profileMemberSinceDisplay = document.getElementById('profile-member-since-display'); // Example ID
+    profileTotalQuizzesDisplay = document.getElementById('profile-total-quizzes-display'); // Example ID
+    profileHighestScoreDisplay = document.getElementById('profile-highest-score-display'); // Example ID
+    profileAverageScoreDisplay = document.getElementById('profile-average-score-display'); // Example ID
+
     if (startQuizButton) {
-        startQuizButton.addEventListener('click', function() {
-            // Show rules before starting the quiz
-            const theme = themeSelect.value;
-            const level = levelSelect.value;
-            showRules(theme, level);
+        startQuizButton.addEventListener('click', showRulesBeforeQuiz);
+    }
+
+    if (themeToggle) {
+        themeToggle.addEventListener('click', toggleTheme); 
+    }
+    if (viewProfileButton) { // This button is on the results page
+        viewProfileButton.addEventListener('click', () => {
+            // Assuming profile.html is a separate page, redirect
+            window.location.href = 'profile.html'; 
+            // If profile is a modal within index.html, use loadAndShowProfileModal();
+        });
+    }
+    if (closeProfileModalButton) {
+        closeProfileModalButton.addEventListener('click', () => {
+            if (profileModal) {
+                profileModal.classList.add('hidden');
+            }
+        });
+    }
+    if (playAgainButtonResults) {
+        playAgainButtonResults.addEventListener('click', () => {
+            resetQuizState();
+            showContainer(landingPage);
+        });
+    }
+
+    const registerButton = document.getElementById('register-button'); // Get register button from modal
+    if (registerButton) {
+        registerButton.addEventListener('click', handleUserRegistration); // Changed form submit to button click
+    }
+
+    if (closeRegistrationModalButton) {
+        closeRegistrationModalButton.addEventListener('click', () => {
+            if (registrationModal) registrationModal.style.display = 'none';
         });
     }
 }
 
-// Hide all containers initially
+// Hide all main page containers
 function hideAllContainers() {
-    landingPage.classList.add('hidden');
-    quizContainer.classList.add('hidden');
-    const rulesContainer = document.getElementById('rules-container');
-    if (rulesContainer) {
-        rulesContainer.classList.add('hidden');
-    }
+    if (landingPage) landingPage.classList.add('hidden');
+    if (quizContainer) quizContainer.classList.add('hidden');
+    if (rulesContainer) rulesContainer.classList.add('hidden');
+    if (resultsPage) resultsPage.classList.add('hidden');
+    // Modals (profileModal, registrationModal) are handled separately
 }
 
-// Show specific container with animations
+// Show a specific main page container
 function showContainer(container) {
     hideAllContainers();
-    container.classList.remove('hidden');
-}
-
-function resetQuizState() {
-    currentQuiz = [];
-    currentQuestionIndex = 0;
-    score = 0;
-    streak = 0;
-    timeBonus = 0;
-    totalTimeBonus = 0;
-    hintsAvailable = 3;
-    powerUps = {
-        skip: 1,
-        timeFreeze: 1,
-        doublePoints: 1
-    };
-    correctAnswers = 0;
-    incorrectAnswers = 0;
-    skippedQuestions = 0;
-    hintsUsed = 0;
-    powerUpsUsed = 0;
-    userAnswers = [];
-    timeLeft = 15;
-    if (timer) {
-        clearInterval(timer);
-        timer = null;
-    }
-    if (scoreElement) scoreElement.textContent = `Score: ${score}`;
-    if (timerElement) timerElement.textContent = `Time: ${timeLeft}s`;
-    const progressBar = document.getElementById('progress-bar');
-    if (progressBar) progressBar.style.width = '0%';
-}
-
-// Initialize leaderboard from localStorage
-function initializeLeaderboard() {
-    const storedData = localStorage.getItem('quizLeaderboard');
-    if (storedData) {
-             leaderboardData = JSON.parse(storedData);
+    if (container) {
+        container.classList.remove('hidden');
+    } else {
+        console.error("showContainer: Target container is null or undefined.");
+        if (landingPage) landingPage.classList.remove('hidden'); 
     }
 }
 
-// Save leaderboard to localStorage
-function saveLeaderboard() {
-    localStorage.setItem('quizLeaderboard', JSON.stringify(leaderboardData));
+function loadUserProfile() {
+    const storedProfile = localStorage.getItem('userProfile');
+    const navbarUsernameElement = document.getElementById('navbar-username'); // Corrected ID from HTML
+
+    if (storedProfile) {
+        userProfile = JSON.parse(storedProfile);
+        if (usernameInput && userProfile.username) {
+            usernameInput.value = userProfile.username;
+        }
+        if (navbarUsernameElement && userProfile.username) {
+            navbarUsernameElement.textContent = userProfile.username;
+            navbarUsernameElement.classList.remove('hidden');
+        } else if (navbarUsernameElement) {
+            navbarUsernameElement.classList.add('hidden');
+        }
+    } else {
+        if (registrationModal) {
+            registrationModal.style.display = 'block'; // Show modal using style.display
+        }
+        if (navbarUsernameElement) {
+            navbarUsernameElement.classList.add('hidden');
+        }
+    }
 }
 
-// Add score to leaderboard
-function addScoreToLeaderboard(score, theme, level) {
-    const username = document.getElementById('username').value.trim();
-    if (!username) {
-        alert('Please enter a username before starting the quiz.');
-         return;
-    }
+function handleUserRegistration(event) {
+    // event.preventDefault(); // Not needed if not a form submit event
+    const username = usernameRegistrationInput.value.trim();
+    const email = emailRegistrationInput.value.trim();
 
-    const entry = {
-        username,
-        score,
-        theme,
-        level,
-        timestamp: new Date().toISOString(),
-        id: Date.now() // Unique identifier for each entry
-    };
-
-    // Remove any existing entries for this user
-    leaderboardData.scores = leaderboardData.scores.filter(entry => entry.username !== username);
-
-    // Add the new entry
-    leaderboardData.scores.push(entry);
-    leaderboardData.lastUpdated = new Date().toISOString();
-
-    // Sort scores in descending order
-    leaderboardData.scores.sort((a, b) => b.score - a.score);
-
-    // Keep only top 100 scores
-    if (leaderboardData.scores.length > 100) {
-        leaderboardData.scores = leaderboardData.scores.slice(0, 100);
-    }
-
-    saveLeaderboard();
-    updateLeaderboardDisplay();
-}
-
-// Update leaderboard display to make it more visually appealing
-function updateLeaderboardDisplay() {
-    const leaderboardTable = document.getElementById('leaderboard-table');
-    if (!leaderboardTable) return;
-
-    leaderboardTable.innerHTML = '';
-
-    leaderboardData.scores.forEach((entry, index) => {
-        const row = document.createElement('tr');
-        row.className = 'leaderboard-item hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors';
-
-        // Add medal emoji for top 3 positions
-        let rankDisplay = index + 1;
-        if (index === 0) {
-            rankDisplay = '🥇';
-        } else if (index === 1) {
-            rankDisplay = '🥈';
-        } else if (index === 2) {
-            rankDisplay = '🥉';
+    if (username && email) {
+        userProfile = { 
+            username: username,
+            email: email,
+            memberSince: new Date().toISOString(),
+            totalQuizzes: 0,
+            highestScore: 0,
+            averageScore: 0,
+            totalScore: 0,
+            totalCorrect: 0,
+            totalIncorrect: 0,
+            totalStreakBonus: 0,
+            totalHintsUsed: 0,
+            totalPowerUpsUsed: 0,
+            achievements: [],
+            recentActivity: [],
+            lastQuiz: null
+        };
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+        
+        if (usernameInput) usernameInput.value = username;
+        const navbarUsernameElement = document.getElementById('navbar-username'); // Corrected ID
+        if (navbarUsernameElement) {
+            navbarUsernameElement.textContent = username;
+            navbarUsernameElement.classList.remove('hidden');
         }
 
-        // Add special styling for top 3 positions
-        const rankClass = index < 3 ? 'text-2xl' : 'font-semibold text-gray-700 dark:text-gray-300';
-        const scoreClass = index < 3 ? 'text-2xl font-bold' : 'font-bold text-green-500 dark:text-green-400';
-        const usernameClass = index < 3 ? 'text-xl font-bold text-indigo-600 dark:text-indigo-400' : 'font-medium text-indigo-600 dark:text-indigo-400';
-
-        row.innerHTML = `
-            <td class="py-4 text-center ${rankClass}">${rankDisplay}</td>
-            <td class="py-4 text-center ${usernameClass}">${entry.username}</td>
-            <td class="py-4 text-center ${scoreClass}">${entry.score}</td>
-            <td class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">${entry.theme} (${entry.level})</td>
-            <td class="py-4 text-center text-sm text-gray-500 dark:text-gray-400">${new Date(entry.timestamp).toLocaleString()}</td>
-        `;
-        leaderboardTable.appendChild(row);
-    });
-
-    // Add a header row for better clarity
-    const headerRow = document.createElement('tr');
-    headerRow.className = 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200';
-    headerRow.innerHTML = `
-        <th class="py-4 text-center">Rank</th>
-        <th class="py-4 text-center">Username</th>
-        <th class="py-4 text-center">Score</th>
-        <th class="py-4 text-center">Theme</th>
-        <th class="py-4 text-center">Date & Time</th>
-    `;
-    leaderboardTable.prepend(headerRow);
-
-    // Add a subtle shadow and rounded corners to the table
-    leaderboardTable.className = 'w-full table-auto border-collapse rounded-lg shadow-md overflow-hidden';
+        if (registrationModal) registrationModal.style.display = 'none';
+        alert('Welcome, ' + username + '!');
+    } else {
+        alert('Please enter both username and email.');
+    }
 }
 
-// Modify showQuestion function
+// Removed loadAndShowProfileModal and updateProfileModalDisplay as profile is a separate page
+
+// Removed all Leaderboard Functions (initializeLeaderboard, saveLeaderboard, addScoreToLeaderboard, updateLeaderboardDisplay, resetLeaderboard)
+
+function showRulesBeforeQuiz() {
+    const theme = themeSelect.value;
+    const level = levelSelect.value;
+
+    if (rulesContainer) {
+        hideAllContainers();
+        rulesContainer.classList.remove('hidden');
+
+        if (understandButton) {
+            const newUnderstandButton = understandButton.cloneNode(true);
+            understandButton.parentNode.replaceChild(newUnderstandButton, understandButton);
+            understandButton = newUnderstandButton; 
+
+            understandButton.onclick = () => { 
+                if (rulesContainer) rulesContainer.classList.add('hidden');
+                startQuizCore(theme, level);
+            };
+        }
+    } else {
+        startQuizCore(theme, level); 
+    }
+}
+
+function startQuizCore(theme, level) {
+    if (!theme && themeSelect) theme = themeSelect.value;
+    if (!level && levelSelect) level = levelSelect.value;
+    
+    let currentUsername = usernameInput ? usernameInput.value.trim() : "";
+
+    if (!currentUsername && userProfile.username) { 
+        currentUsername = userProfile.username;
+        if (usernameInput) usernameInput.value = currentUsername;
+    }
+
+    if (!currentUsername) {
+        alert('Please register or enter a username to start the quiz.');
+        if (registrationModal && !localStorage.getItem('userProfile')) {
+             registrationModal.style.display = 'block'; 
+        } else if (usernameInput) {
+            usernameInput.focus();
+        }
+        return;
+    }
+    
+    if (userProfile.username !== currentUsername || !userProfile.email) {
+        userProfile.username = currentUsername;
+        if (!userProfile.memberSince) userProfile.memberSince = new Date().toISOString(); 
+        localStorage.setItem('userProfile', JSON.stringify(userProfile)); 
+        
+        const navbarUsernameElement = document.getElementById('navbar-username'); // Corrected ID
+        if (navbarUsernameElement) {
+            navbarUsernameElement.textContent = currentUsername;
+            navbarUsernameElement.classList.remove('hidden');
+        }
+    }
+
+    resetQuizState(); 
+    showContainer(quizContainer);
+    
+    const loadingSpinner = document.createElement('div');
+    loadingSpinner.className = 'loading-spinner w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto my-8'; 
+    if (quizContainer) quizContainer.innerHTML = ''; 
+    if (quizContainer) quizContainer.appendChild(loadingSpinner);
+    
+    setTimeout(() => {
+        if (quizContainer && quizContainer.contains(loadingSpinner)) {
+            quizContainer.removeChild(loadingSpinner);
+        }
+        if (typeof getRandomQuestions !== 'function') {
+            alert("Error: Question generation function is not available. Quiz cannot start.");
+            showContainer(landingPage);
+            return;
+        }
+        currentQuiz = getRandomQuestions(theme, level, 5); 
+
+        if (!currentQuiz || currentQuiz.length === 0) {
+            alert("No questions available for this theme/level. Please try different options.");
+            showContainer(landingPage);
+            return;
+        }
+        showQuestion(); 
+    }, 1000); 
+}
+
+// ... (showQuestion function remains largely the same, ensure power-up button IDs match if changed)
 function showQuestion() {
-    if (!currentQuiz[currentQuestionIndex]) return;
+    if (!currentQuiz || currentQuestionIndex >= currentQuiz.length || !currentQuiz[currentQuestionIndex]) {
+        endQuiz();
+        return;
+    }
 
     const question = currentQuiz[currentQuestionIndex];
+    if (!quizContainer) {
+        return;
+    }
+    stopTimer(); 
 
-    // Clear the quiz container
+    const escapeHTML = (str) => String(str).replace(/[&<>"']/g, match => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]);
+
+    let optionsHTML = '';
+    question.options.forEach((option) => {
+        optionsHTML += `
+            <button class="option-button w-full bg-white text-gray-800 py-3 px-5 rounded-lg border-2 border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200 text-lg font-medium shadow-sm hover:shadow-md">
+                ${escapeHTML(option)}
+            </button>
+        `;
+    });
+    
+    const hintButtonDisabled = hintsAvailable === 0 ? 'opacity-50 cursor-not-allowed' : '';
+    const skipButtonDisabled = (powerUps.skip || 0) === 0 ? 'opacity-50 cursor-not-allowed' : '';
+    const timeFreezeButtonDisabled = (powerUps.timeFreeze || 0) === 0 ? 'opacity-50 cursor-not-allowed' : '';
+    const doublePointsButtonDisabled = (powerUps.doublePoints || 0) === 0 ? 'opacity-50 cursor-not-allowed' : '';
+
+
     quizContainer.innerHTML = `
-        <div class="flex justify-between items-center mb-8">
+        <div class="flex justify-between items-center mb-6">
             <div id="timer" class="timer text-xl font-semibold bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm">⏱️ Time: ${timeLeft}s</div>
             <div id="score" class="score text-xl font-semibold bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-lg shadow-sm">🏆 Score: ${score}</div>
         </div>
-        <div class="progress-bar mb-6" id="progress-bar"></div>
-
-        <!-- Power-ups Section -->
-        <div class="power-ups-section mb-8">
-            <h3 class="text-lg font-semibold mb-4 text-center text-gray-700 dark:text-gray-300">Power-ups & Hints</h3>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <button id="hint-button" class="power-up-button bg-blue-500 text-white px-4 py-3 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center space-x-2 ${hintsAvailable === 0 ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <span>💡</span>
-                    <span>Hint (${hintsAvailable})</span>
+        <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mb-6">
+            <div id="progress-bar-inner" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300 ease-out" style="width: 0%;"></div>
+        </div>
+        <div class="power-ups-section mb-6">
+            <h3 class="text-lg font-semibold mb-3 text-center text-gray-700 dark:text-gray-300">Power-ups & Hints</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <button id="hint-button" class="power-up-button bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 flex items-center justify-center space-x-1 ${hintButtonDisabled}">
+                    <span>💡</span><span>Hint (${hintsAvailable})</span>
                 </button>
-                <button id="skip-button" class="power-up-button bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition-colors flex items-center justify-center space-x-2 ${powerUps.skip === 0 ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <span>⏩</span>
-                    <span>Skip (${powerUps.skip})</span>
+                <button id="skip-button" class="power-up-button bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 flex items-center justify-center space-x-1 ${skipButtonDisabled}">
+                    <span>⏩</span><span>Skip (${powerUps.skip || 0})</span>
                 </button>
-                <button id="time-freeze-button" class="power-up-button bg-green-500 text-white px-4 py-3 rounded-lg hover:bg-green-600 transition-colors flex items-center justify-center space-x-2 ${powerUps.timeFreeze === 0 ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <span>⏸️</span>
-            <span>Time Freeze (${powerUps.timeFreeze})</span>
+                <button id="time-freeze-button" class="power-up-button bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 flex items-center justify-center space-x-1 ${timeFreezeButtonDisabled}">
+                    <span>⏸️</span><span>Freeze (${powerUps.timeFreeze || 0})</span>
                 </button>
-                <button id="double-points-button" class="power-up-button bg-yellow-500 text-white px-4 py-3 rounded-lg hover:bg-yellow-600 transition-colors flex items-center justify-center space-x-2 ${powerUps.doublePoints === 0 ? 'opacity-50 cursor-not-allowed' : ''}">
-                    <span>2️⃣</span>
-            <span>Double Points (${powerUps.doublePoints})</span>
+                <button id="double-points-button" class="power-up-button bg-yellow-500 text-white px-3 py-2 rounded-lg hover:bg-yellow-600 flex items-center justify-center space-x-1 ${doublePointsButtonDisabled}">
+                    <span>2️⃣</span><span>2x Pts (${powerUps.doublePoints || 0})</span>
                 </button>
             </div>
         </div>
-
-        <!-- Question Section -->
-        <div class="question-section mb-8 p-6 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm">
-            <div id="question" class="text-2xl font-semibold text-center text-gray-800 dark:text-gray-200">
-                ${question.question}
+        <div class="question-section mb-6 p-5 bg-gray-100 dark:bg-gray-700 rounded-lg shadow-sm">
+            <div id="question-text-element" class="text-xl font-semibold text-center text-gray-800 dark:text-gray-200">
+                ${escapeHTML(question.question)}
             </div>
         </div>
-
-        <!-- Options Section -->
-        <div id="options" class="options-section grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-            ${question.options.map((option, index) => `
-                <button class="option-button w-full bg-white text-gray-800 py-4 px-6 rounded-lg border-2 border-gray-200 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 dark:bg-gray-700 dark:border-gray-600 dark:text-white transition-all duration-200 text-lg font-medium shadow-sm hover:shadow-md">
-                    ${option}
-                </button>
-            `).join('')}
+        <div id="options-container-element" class="options-section grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+            ${optionsHTML}
         </div>
-
-        <!-- Next Button -->
-        <button id="next-button" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 transform hover:scale-105 hidden">
+        <button id="next-question-button-element" class="w-full bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-3 px-4 rounded-lg hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-300 transform hover:scale-105 hidden">
             Next Question
         </button>
     `;
-
-    // Initialize DOM elements
-    timerElement = document.getElementById('timer');
-    scoreElement = document.getElementById('score');
-    optionsElement = document.getElementById('options');
-    nextButton = document.getElementById('next-button');
-
-    // Add option click event listeners
-    const optionButtons = optionsElement.querySelectorAll('.option-button');
+    
+    const optionButtons = quizContainer.querySelectorAll('.option-button');
     optionButtons.forEach((button, index) => {
         button.addEventListener('click', () => selectAnswer(index));
     });
 
-    // Add power-up event listeners
-    document.getElementById('hint-button').addEventListener('click', useHint);
-    document.getElementById('skip-button').addEventListener('click', useSkip);
-    document.getElementById('time-freeze-button').addEventListener('click', useTimeFreeze);
-    document.getElementById('double-points-button').addEventListener('click', useDoublePoints);
+    const hintBtn = document.getElementById('hint-button');
+    if (hintBtn && hintsAvailable > 0) hintBtn.addEventListener('click', useHint);
+    else if (hintBtn) hintBtn.disabled = true;
 
-    // Add next button event listener
-    nextButton.addEventListener('click', showNextQuestion);
-
-    // Update progress bar
-    updateProgressBar();
+    const skipBtn = document.getElementById('skip-button');
+    if (skipBtn && (powerUps.skip || 0) > 0) skipBtn.addEventListener('click', useSkip);
+    else if (skipBtn) skipBtn.disabled = true;
     
-    // Start timer
-    startTimer();
+    const freezeBtn = document.getElementById('time-freeze-button');
+    if (freezeBtn && (powerUps.timeFreeze || 0) > 0) freezeBtn.addEventListener('click', useTimeFreeze);
+    else if (freezeBtn) freezeBtn.disabled = true;
+
+    const doublePtsBtn = document.getElementById('double-points-button');
+    if (doublePtsBtn && (powerUps.doublePoints || 0) > 0) doublePtsBtn.addEventListener('click', useDoublePoints);
+    else if (doublePtsBtn) doublePtsBtn.disabled = true;
+    
+    const nextBtn = document.getElementById('next-question-button-element');
+    if (nextBtn) nextBtn.addEventListener('click', showNextQuestion);
+
+    updateProgressBar();
+    startTimer(); 
 }
 
-// Modify startQuiz function to check for username
-function startQuiz() {
-    showRulesBeforeQuiz();
-}
-
-// Show rules before starting the quiz
-function showRulesBeforeQuiz() {
-    const rulesContainer = document.getElementById('rules-container');
-    if (rulesContainer) {
-        hideAllContainers();
-        rulesContainer.classList.remove('hidden');
-        // Add animation class if needed
-        rulesContainer.classList.add('animate-fade-in');
-        // Attach event to "I Understand, Start Quiz!" button
-    const understandBtn = document.getElementById('understand-button');
-    if (understandBtn) {
-        understandBtn.onclick = () => {
-            rulesContainer.classList.add('hidden');
-            startQuizCore();
-        };
-    }
+// ... (updateProgressBar function remains the same)
+function updateProgressBar() {
+    const progressBarInner = document.getElementById('progress-bar-inner');
+    if (progressBarInner && currentQuiz && currentQuiz.length > 0) {
+        const progress = ((currentQuestionIndex + 1) / currentQuiz.length) * 100;
+        progressBarInner.style.width = progress + '%';
+    } else if (progressBarInner) {
+        progressBarInner.style.width = '0%';
     }
 }
 
-// Core quiz start logic (separated from button click)
-function startQuizCore(theme, level) {
-    if (!theme) theme = themeSelect.value;
-    if (!level) level = levelSelect.value;
-    const username = document.getElementById('username').value.trim();
-    if (!username) {
-        alert('Please enter a username before starting the quiz.');
-        return;
-    }
-    resetQuizState();
-    showContainer(quizContainer);
-    const loadingSpinner = document.createElement('div');
-    loadingSpinner.className = 'loading-spinner';
-    quizContainer.appendChild(loadingSpinner);
-    setTimeout(() => {
-        quizContainer.removeChild(loadingSpinner);
-        currentQuiz = getRandomQuestions(theme, level, 5);
-        showQuestion();
-        updateProgressBar();
-        startTimer();
-        scoreElement.textContent = `Score: ${score}`;
-    }, 1500);
-}
-
+// ... (selectAnswer function remains largely the same)
 function selectAnswer(index) {
-    // Stop the timer
     stopTimer();
-
     const question = currentQuiz[currentQuestionIndex];
-    const buttons = optionsElement.querySelectorAll('.option-button');
-
-    // Store user's answer
+    const quizOptionsContainer = document.getElementById('options-container-element');
+    if (!quizOptionsContainer) return;
+    const buttons = quizOptionsContainer.querySelectorAll('.option-button');
+    
     userAnswers[currentQuestionIndex] = index;
+    buttons.forEach(button => button.disabled = true);
 
-    // Disable all buttons
-    buttons.forEach(button => {
-        button.disabled = true;
-    });
+    const scoreDisplay = document.getElementById('score'); 
 
-    // Check if answer is correct
     if (index === question.correct) {
-        buttons[index].classList.add('correct');
+        buttons[index].classList.add('correct', 'border-green-500', 'ring-green-500'); 
+        buttons[index].classList.remove('hover:bg-gray-50', 'dark:hover:bg-gray-800');
         correctAnswers++;
+        
+        let pointsEarned = (SCORING && SCORING.BASE_POINTS) || 10;
+        let currentQuestionTimeBonus = 0;
 
-        // Calculate points
-        const basePoints = SCORING.BASE_POINTS;
-        let timeBonus = 0;
-
-        // Calculate time bonus
-        if (timeLeft >= SCORING.MIN_TIME_FOR_BONUS) {
+        if (SCORING && timeLeft >= SCORING.MIN_TIME_FOR_BONUS) {
             const timeRatio = (timeLeft - SCORING.MIN_TIME_FOR_BONUS) / (15 - SCORING.MIN_TIME_FOR_BONUS);
-            timeBonus = Math.floor(basePoints * SCORING.TIME_BONUS_MULTIPLIER * timeRatio);
+            currentQuestionTimeBonus = Math.floor(pointsEarned * (SCORING.TIME_BONUS_MULTIPLIER || 0.5) * timeRatio);
         }
-        
-        // Calculate streak bonus
-        let streakBonus = 0;
-        streak++; // Increment streak before checking for bonus
-        
-        // Check for streak bonuses
-        if (streak === 3) {
-            streakBonus = SCORING.STREAK_BONUS[3];
-            totalStreakBonus += streakBonus;
-        } else if (streak === 5) {
-            streakBonus = SCORING.STREAK_BONUS[5];
-            totalStreakBonus += streakBonus;
+        pointsEarned += currentQuestionTimeBonus;
+        totalTimeBonus += currentQuestionTimeBonus; 
+
+        streak++;
+        let currentQuestionStreakBonus = 0;
+        if (SCORING && SCORING.STREAK_BONUS) {
+            if (streak === 3 && SCORING.STREAK_BONUS[3]) currentQuestionStreakBonus = SCORING.STREAK_BONUS[3];
+            else if (streak === 5 && SCORING.STREAK_BONUS[5]) currentQuestionStreakBonus = SCORING.STREAK_BONUS[5];
         }
-        
-        const pointsEarned = basePoints + timeBonus + streakBonus;
+        pointsEarned += currentQuestionStreakBonus;
+        totalStreakBonus += currentQuestionStreakBonus; 
+
+        if (isDoublePointsActive) {
+            pointsEarned *= 2;
+            isDoublePointsActive = false; 
+            const doublePtsBtn = document.getElementById('double-points-button');
+            if (doublePtsBtn) {
+                 doublePtsBtn.innerHTML = `<span>2️⃣</span><span>2x Pts (${powerUps.doublePoints || 0})</span>`;
+                 if ((powerUps.doublePoints || 0) === 0) doublePtsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
         
         score += pointsEarned;
-        totalTimeBonus += timeBonus;
-        
-        // Update score display
-        if (scoreElement) {
-            scoreElement.textContent = `🏆 Score: ${score} (+${pointsEarned})`;
-        }
-        
-        sounds.correct.play();
-        
-        if (streak >= 3) {
-            showStreakMessage(streak);
-        }
+        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score} (+${pointsEarned})`;
+        if (sounds && sounds.correct) sounds.correct.play();
+        if (streak >= 3) showStreakMessage(streak);
+
     } else {
-        buttons[index].classList.add('wrong');
-             buttons[question.correct].classList.add('correct');
+        buttons[index].classList.add('wrong', 'border-red-500', 'ring-red-500'); 
+        buttons[index].classList.remove('hover:bg-gray-50', 'dark:hover:bg-gray-800');
+        if (buttons[question.correct]) {
+            buttons[question.correct].classList.add('correct', 'border-green-500');
+            buttons[question.correct].classList.remove('hover:bg-gray-50', 'dark:hover:bg-gray-800');
+        }
         incorrectAnswers++;
         streak = 0;
-        sounds.wrong.play();
+        if (sounds && sounds.wrong) sounds.wrong.play();
+        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
     }
     
-    // Show next button
-        if (nextButton) {
-            nextButton.classList.remove('hidden');
-        }
+    const nextBtn = document.getElementById('next-question-button-element');
+    if (nextBtn) nextBtn.classList.remove('hidden');
 }
 
+// ... (showNextQuestion function remains the same)
 function showNextQuestion() {
-    currentQuestionIndex++;
-    if (currentQuestionIndex < currentQuiz.length) {
-        showQuestion();
-    } else {
-        endQuiz(); // Ensure this is called after the last question
-    }
-}
-
-function updateProgressBar() {
-         const progress = ((currentQuestionIndex + 1) / currentQuiz.length) * 100;
-    document.getElementById('progress-bar').style.width = `${progress}%`;
-}
-
-function startTimer() {
-    // Clear any existing timer
-    if (timer) {
-        clearInterval(timer);
-    }
-
-    timeLeft = 15;
-    if (timerElement) {
-        timerElement.textContent = `⏱️ Time: ${timeLeft}s`;
-    }
-
-    timer = setInterval(() => {
-        timeLeft--;
-        if (timerElement) {
-            timerElement.textContent = `⏱️ Time: ${timeLeft}s`;
-        }
-        
-        if (timeLeft <= 0) {
-            clearInterval(timer);
-            sounds.timeup.play();
-            handleTimeUp();
-        }
-    }, 1000);
-}
-
-function stopTimer() {
-    if (timer) {
-        clearInterval(timer);
-        timer = null;
-    }
-}
-
-function handleTimeUp() {
-    const buttons = optionsElement.querySelectorAll('.option-button');
-    buttons.forEach(button => {
-        button.disabled = true;
-    });
-    
-    const question = currentQuiz[currentQuestionIndex];
-    const correctButton = buttons[question.correct];
-    correctButton.classList.add('correct');
-    
-    if (nextButton) {
-        nextButton.classList.remove('hidden');
-    }
-}
-
-function endQuiz() {
-    clearInterval(timer);
-    // Calculate final score and stats
-    const finalScore = score;
-    const accuracy = Math.round((correctAnswers / currentQuiz.length) * 100);
-    const timeTaken = 15 * currentQuiz.length - totalTimeBonus;
-    // Update user profile in localStorage
-    const profile = getUserProfile();
-    if (profile) {
-        profile.totalQuizzes = (profile.totalQuizzes || 0) + 1;
-        profile.totalScore = (profile.totalScore || 0) + finalScore;
-        profile.highestScore = Math.max(profile.highestScore || 0, finalScore);
-        profile.averageScore = Math.round(profile.totalScore / profile.totalQuizzes);
-        profile.totalCorrect = (profile.totalCorrect || 0) + correctAnswers;
-        profile.totalIncorrect = (profile.totalIncorrect || 0) + incorrectAnswers;
-        profile.totalStreakBonus = (profile.totalStreakBonus || 0) + totalStreakBonus;
-        profile.totalHintsUsed = (profile.totalHintsUsed || 0) + hintsUsed;
-        profile.totalPowerUpsUsed = (profile.totalPowerUpsUsed || 0) + powerUpsUsed;
-        profile.lastQuiz = {
-            score: finalScore,
-            correct: correctAnswers,
-            incorrect: incorrectAnswers,
-            timeTaken,
-            accuracy,
-            theme: themeSelect.value,
-            level: levelSelect.value,
-            date: new Date().toISOString()
-        };
-        // Add to recent activity
-        profile.recentActivity = profile.recentActivity || [];
-        profile.recentActivity.unshift({
-            type: 'quiz',
-            theme: themeSelect.value,
-            level: levelSelect.value,
-            score: finalScore,
-            correct: correctAnswers,
-            timeTaken,
-            accuracy,
-            timestamp: new Date().toISOString()
-        });
-        // Limit recent activity to 20
-        if (profile.recentActivity.length > 20) profile.recentActivity = profile.recentActivity.slice(0, 20);
-        localStorage.setItem('userProfile', JSON.stringify(profile));
-    }
-    // Show results page
-    showResultsPage(finalScore);
-    // Update profile page if open
-    if (window.profileManager && typeof window.profileManager.updateProfileDisplay === 'function') {
-        window.profileManager.updateProfileDisplay();
-    }
-}
-
-// Add streak message function
-function showStreakMessage(streak) {
-    const streakMessages = {
-        3: "Good!",
-        5: "Great!",
-        7: "Excellent!",
-        10: "Unstoppable!"
-    };
-    
-    if (streakMessages[streak]) {
-        const streakDiv = document.createElement('div');
-        streakDiv.className = 'streak-message fixed top-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-6 py-3 rounded-lg shadow-lg animate-bounce';
-        streakDiv.textContent = `${streakMessages[streak]} ${streak} in a row!`;
-        document.body.appendChild(streakDiv);
-        
-        setTimeout(() => {
-            streakDiv.remove();
-        }, 2000);
-    }
-}
-
-// Add power-up functions
-function useHint() {
-    if (hintsAvailable === 0) return;
-
-    const question = currentQuiz[currentQuestionIndex];
-    const options = optionsElement.querySelectorAll('.option-button');
-    const wrongOptions = Array.from(options)
-        .map((option, index) => ({ option, index }))
-        .filter(({ index }) => index !== question.correct);
-    
-    // Remove two wrong options
-    const optionsToRemove = wrongOptions.sort(() => Math.random() - 0.5).slice(0, 2);
-    optionsToRemove.forEach(({ option }) => {
-        option.style.opacity = '0.5';
-        option.disabled = true;
-    });
-    
-    hintsAvailable--;
-    hintsUsed++;
-    score = Math.max(0, score - PENALTIES.HINT); // Apply penalty
-    scoreElement.textContent = `Score: ${score} (-${PENALTIES.HINT} hint penalty)`;
-    updatePowerUpsUI();
-}
-
-function useSkip() {
-    if (powerUps.skip === 0) return;
-    
-    powerUps.skip--;
-    powerUpsUsed++;
-    skippedQuestions++;
-    score = Math.max(0, score - PENALTIES.SKIP); // Apply penalty
-    scoreElement.textContent = `Score: ${score} (-${PENALTIES.SKIP} skip penalty)`;
-    
     currentQuestionIndex++;
     if (currentQuestionIndex < currentQuiz.length) {
         showQuestion();
     } else {
         endQuiz();
     }
-    updatePowerUpsUI();
+}
+
+function endQuiz() {
+    stopTimer();
+    const finalScore = score;
+    const accuracy = currentQuiz.length > 0 ? Math.round((correctAnswers / currentQuiz.length) * 100) : 0;
+    const timeTakenValue = (currentQuiz.length * 15) - (userAnswers.reduce((acc, _, idx) => acc + (15 - (userAnswers[idx] !== undefined ? timeLeft : 0)), 0)); // Simplified time taken, needs refinement
+
+    if (userProfile.username) { 
+        userProfile.totalQuizzes = (userProfile.totalQuizzes || 0) + 1;
+        userProfile.totalScore = (userProfile.totalScore || 0) + finalScore;
+        userProfile.highestScore = Math.max(userProfile.highestScore || 0, finalScore);
+        userProfile.averageScore = userProfile.totalQuizzes > 0 ? Math.round(userProfile.totalScore / userProfile.totalQuizzes) : 0;
+        userProfile.totalCorrect = (userProfile.totalCorrect || 0) + correctAnswers;
+        userProfile.totalIncorrect = (userProfile.totalIncorrect || 0) + incorrectAnswers;
+        userProfile.totalStreakBonus = (userProfile.totalStreakBonus || 0) + totalStreakBonus;
+        userProfile.totalHintsUsed = (userProfile.totalHintsUsed || 0) + hintsUsed;
+        userProfile.totalPowerUpsUsed = (userProfile.totalPowerUpsUsed || 0) + powerUpsUsed;
+
+        const quizTheme = themeSelect ? themeSelect.value : 'unknown';
+        const quizLevel = levelSelect ? levelSelect.value : 'unknown';
+
+        userProfile.lastQuiz = {
+            score: finalScore,
+            correct: correctAnswers,
+            incorrect: incorrectAnswers,
+            accuracy: accuracy,
+            theme: quizTheme,
+            level: quizLevel,
+            date: new Date().toISOString()
+        };
+        userProfile.recentActivity = userProfile.recentActivity || [];
+        userProfile.recentActivity.unshift({ type: 'quiz', score: finalScore, theme: quizTheme, level: quizLevel, date: new Date().toISOString() });
+        if (userProfile.recentActivity.length > 20) userProfile.recentActivity = userProfile.recentActivity.slice(0, 20);
+        
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+    }
+
+    showResultsPage(finalScore, correctAnswers, incorrectAnswers, accuracy, totalTimeBonus, timeTakenValue);
+}
+
+function showResultsPage(finalScoreVal, correct, incorrect, acc, timeBonusVal, timeTakenVal) {
+    if (finalScoreDisplay) finalScoreDisplay.textContent = String(finalScoreVal);
+    if (correctAnswersDisplayResults) correctAnswersDisplayResults.textContent = `${correct}/${currentQuiz.length}`; // Show as X/Y
+    // incorrectAnswersDisplayResults is not a separate element in the current HTML structure for results
+    if (accuracyDisplayResults) accuracyDisplayResults.textContent = String(acc) + '%';
+    // The element 'time-taken' was used for totalTimeBonusDisplayResults. Assuming it should show time taken.
+    if (totalTimeBonusDisplayResults) totalTimeBonusDisplayResults.textContent = `${timeTakenVal}s`; // Display time taken
+    // If you want to show time bonus separately, you'll need another element in HTML and update here.
+
+    const resultsUsernameSpan = document.getElementById('results-username');
+    if (resultsUsernameSpan && userProfile && userProfile.username) {
+        resultsUsernameSpan.textContent = userProfile.username;
+    } else if (resultsUsernameSpan) {
+        resultsUsernameSpan.textContent = "Guest"; // Fallback if username is not found
+    }
+
+    showContainer(resultsPage);
+}
+
+// ... (Power-up functions useHint, useSkip, useTimeFreeze, useDoublePoints remain largely the same)
+function useHint() {
+    if (hintsAvailable > 0) {
+        hintsAvailable--;
+        hintsUsed++;
+        if (PENALTIES && PENALTIES.HINT) score -= PENALTIES.HINT;
+        
+        const scoreDisplay = document.getElementById('score');
+        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+        
+        const question = currentQuiz[currentQuestionIndex];
+        const optionsContainer = document.getElementById('options-container-element');
+        if (optionsContainer) {
+            const optionButtons = optionsContainer.querySelectorAll('.option-button:not(:disabled)');
+            let wrongOptions = [];
+            optionButtons.forEach((btn, idx) => {
+                // Assuming options are indexed 0, 1, 2, 3 and question.correct is the index of correct answer
+                const optionText = btn.textContent.trim();
+                if (optionText !== question.options[question.correct]) wrongOptions.push(btn);
+            });
+
+            // Remove two wrong options
+            let removedCount = 0;
+            while(removedCount < 2 && wrongOptions.length > 0){
+                const randomIndex = Math.floor(Math.random() * wrongOptions.length);
+                const btnToDisable = wrongOptions.splice(randomIndex, 1)[0];
+                if(btnToDisable){ // Check if button exists
+                    btnToDisable.classList.add('opacity-50', 'pointer-events-none', 'bg-gray-300', 'dark:bg-gray-600');
+                    btnToDisable.disabled = true;
+                    removedCount++;
+                }
+            }
+        }
+        
+        const hintBtn = document.getElementById('hint-button');
+        if (hintBtn) {
+            hintBtn.innerHTML = `<span>💡</span><span>Hint (${hintsAvailable})</span>`;
+            if (hintsAvailable === 0) {
+                hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                hintBtn.disabled = true;
+            }
+        }
+    }
+}
+
+function useSkip() {
+    if (powerUps.skip > 0) {
+        powerUps.skip--;
+        powerUpsUsed++;
+        skippedQuestions++;
+        if (PENALTIES && PENALTIES.SKIP) score -= PENALTIES.SKIP;
+
+        const scoreDisplay = document.getElementById('score');
+        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+        
+        stopTimer();
+        showNextQuestion();
+        
+        const skipBtn = document.getElementById('skip-button');
+        if (skipBtn) {
+            skipBtn.innerHTML = `<span>⏩</span><span>Skip (${powerUps.skip})</span>`;
+            if (powerUps.skip === 0) {
+                skipBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                skipBtn.disabled = true;
+            }
+        }
+    }
 }
 
 function useTimeFreeze() {
-    if (powerUps.timeFreeze === 0) return;
-    
-    powerUps.timeFreeze--;
-    powerUpsUsed++;
-    timeLeft += 10;
-    score = Math.max(0, score - PENALTIES.TIME_FREEZE); // Apply penalty
-    scoreElement.textContent = `Score: ${score} (-${PENALTIES.TIME_FREEZE} time freeze penalty)`;
-    timerElement.textContent = `Time: ${timeLeft}s`;
-    updatePowerUpsUI();
+    if (powerUps.timeFreeze > 0) {
+        powerUps.timeFreeze--;
+        powerUpsUsed++;
+        if (PENALTIES && PENALTIES.TIME_FREEZE) score -= PENALTIES.TIME_FREEZE;
+        
+        const scoreDisplay = document.getElementById('score');
+        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+        
+        timeLeft += 10; // Add 10 seconds to the current timer
+        const timerDisplay = document.getElementById('timer');
+        if(timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+        // Timer continues, just with more time. No need to stop and restart unless specific behavior is desired.
+        alert("10 seconds added to the timer!");
+
+        const freezeBtn = document.getElementById('time-freeze-button');
+        if (freezeBtn) {
+            freezeBtn.innerHTML = `<span>⏸️</span><span>Freeze (${powerUps.timeFreeze})</span>`;
+            if (powerUps.timeFreeze === 0) {
+                freezeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                freezeBtn.disabled = true;
+            }
+        }
+    }
 }
 
 function useDoublePoints() {
-    if (powerUps.doublePoints === 0) return;
-    
-    powerUps.doublePoints--;
-    powerUpsUsed++;
-    score = Math.max(0, score - PENALTIES.DOUBLE_POINTS); // Apply penalty
-    scoreElement.textContent = `Score: ${score} (-${PENALTIES.DOUBLE_POINTS} double points penalty)`;
-    
-    // Double points for the next correct answer
-    const originalSelectAnswer = selectAnswer;
-    selectAnswer = function(index) {
-        const question = currentQuiz[currentQuestionIndex];
-        if (index === question.correct) {
-            score *= 2;
+     if (powerUps.doublePoints > 0) {
+        powerUps.doublePoints--;
+        powerUpsUsed++;
+        if (PENALTIES && PENALTIES.DOUBLE_POINTS) score -= PENALTIES.DOUBLE_POINTS; 
+        
+        const scoreDisplay = document.getElementById('score');
+        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+        
+        isDoublePointsActive = true;
+        alert("Double Points activated for the next correct answer!");
+
+        const doublePtsBtn = document.getElementById('double-points-button');
+        if (doublePtsBtn) {
+            doublePtsBtn.innerHTML = `<span>2️⃣</span><span>2x Pts (${powerUps.doublePoints})</span>`;
+            if (powerUps.doublePoints === 0) {
+                doublePtsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                doublePtsBtn.disabled = true;
+            }
         }
-        originalSelectAnswer(index);
-        selectAnswer = originalSelectAnswer;
-    };
-    updatePowerUpsUI();
-}
-
-function updatePowerUpsUI() {
-    const hintButton = document.getElementById('hint-button');
-    const skipButton = document.getElementById('skip-button');
-    const timeFreezeButton = document.getElementById('time-freeze-button');
-    const doublePointsButton = document.getElementById('double-points-button');
-
-    if (hintButton) {
-        hintButton.textContent = `Hint (${hintsAvailable})`;
-        hintButton.disabled = hintsAvailable === 0;
-        hintButton.classList.toggle('opacity-50', hintsAvailable === 0);
-    }
-    if (skipButton) {
-        skipButton.textContent = `Skip (${powerUps.skip})`;
-        skipButton.disabled = powerUps.skip === 0;
-        skipButton.classList.toggle('opacity-50', powerUps.skip === 0);
-    }
-    if (timeFreezeButton) {
-        timeFreezeButton.textContent = `Time Freeze (${powerUps.timeFreeze})`;
-        timeFreezeButton.disabled = powerUps.timeFreeze === 0;
-        timeFreezeButton.classList.toggle('opacity-50', powerUps.timeFreeze === 0);
-    }
-    if (doublePointsButton) {
-        doublePointsButton.textContent = `Double Points (${powerUps.doublePoints})`;
-        doublePointsButton.disabled = powerUps.doublePoints === 0;
-        doublePointsButton.classList.toggle('opacity-50', powerUps.doublePoints === 0);
     }
 }
 
-// Reset leaderboard data
-function resetLeaderboard() {
-    if (confirm('Are you sure you want to reset the leaderboard? This action cannot be undone.')) {
-        leaderboardData = {
-            scores: [],
-            lastUpdated: null
-        };
-        saveLeaderboard();
-        updateLeaderboardDisplay();
-    }
-}
+// Theme toggle functions
+function initializeTheme() {
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
+    const sunIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-15.66l-.707.707M4.04 19.96l-.707.707M21 12h-1M4 12H3m15.66 8.66l-.707-.707M4.04 4.04l-.707-.707" />`;
+    const moonIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
 
-// Registration and user display logic
-// Show registration modal if not registered
-function showRegistrationModal() {
-    const modal = document.getElementById('registration-modal');
-    if (modal) modal.style.display = 'flex';
-}
-
-function hideRegistrationModal() {
-    const modal = document.getElementById('registration-modal');
-    if (modal) modal.style.display = 'none';
-}
-
-function saveUserProfile(username, email) {
-    const profile = {
-        username: username,
-        email: email,
-        memberSince: new Date().toISOString(),
-        totalQuizzes: 0,
-        highestScore: 0,
-        averageScore: 0,
-        totalScore: 0,
-        totalCorrect: 0,
-        totalIncorrect: 0,
-        totalStreakBonus: 0,
-        totalHintsUsed: 0,
-        totalPowerUpsUsed: 0,
-        achievements: [],
-        recentActivity: [],
-        lastQuiz: null
-    };
-    localStorage.setItem('userProfile', JSON.stringify(profile));
-    return profile;
-}
-
-function getUserProfile() {
-    const stored = localStorage.getItem('userProfile');
-    if (stored) return JSON.parse(stored);
-    return null;
-}
-
-function updateUsernameDisplay() {
-    const profile = getUserProfile();
-    if (!profile) return;
-    // Navbar
-    const navbarUsername = document.getElementById('navbar-username');
-    if (navbarUsername) navbarUsername.textContent = profile.username;
-    // Landing page input
-    const usernameInput = document.getElementById('username');
-    if (usernameInput) usernameInput.value = profile.username;
-    // Results page (if you want to show username)
-    // Add more places as needed
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    // Registration modal logic
-    const profile = getUserProfile();
-    if (!profile || !profile.username || !profile.email) {
-        showRegistrationModal();
+    if (localStorage.getItem('theme') === 'dark' || 
+        (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark-theme');
+        if (themeToggleIcon) themeToggleIcon.innerHTML = sunIcon;
     } else {
-        updateUsernameDisplay();
+        document.documentElement.classList.remove('dark');
+        document.body.classList.remove('dark-theme');
+        if (themeToggleIcon) themeToggleIcon.innerHTML = moonIcon;
     }
+}
 
-    // Registration form submit
-    const regForm = document.getElementById('registration-form');
-    if (regForm) {
-        regForm.addEventListener('submit', function(e) {
-            e.preventDefault();
-            const username = document.getElementById('reg-username').value.trim();
-            const email = document.getElementById('reg-email').value.trim();
-            if (!username || !email) return;
-            saveUserProfile(username, email);
-            updateUsernameDisplay();
-            hideRegistrationModal();
-        });
+function toggleTheme() {
+    const themeToggleIcon = document.getElementById('theme-toggle-icon');
+    const sunIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-15.66l-.707.707M4.04 19.96l-.707.707M21 12h-1M4 12H3m15.66 8.66l-.707-.707M4.04 4.04l-.707-.707" />`;
+    const moonIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
+
+    if (document.documentElement.classList.contains('dark')) {
+        document.documentElement.classList.remove('dark');
+        document.body.classList.remove('dark-theme');
+        localStorage.setItem('theme', 'light');
+        if (themeToggleIcon) themeToggleIcon.innerHTML = moonIcon;
+    } else {
+        document.documentElement.classList.add('dark');
+        document.body.classList.add('dark-theme');
+        localStorage.setItem('theme', 'dark');
+        if (themeToggleIcon) themeToggleIcon.innerHTML = sunIcon;
     }
+}
 
-    // Optional: close modal with X
-    const closeModal = document.getElementById('close-modal');
-    if (closeModal) {
-        closeModal.addEventListener('click', hideRegistrationModal);
+// Utility functions (resetQuizState, startTimer, stopTimer, handleTimeUp, showStreakMessage)
+function resetQuizState() {
+    currentQuestionIndex = 0;
+    score = 0;
+    timeLeft = 15;
+    userAnswers = [];
+    streak = 0;
+    totalTimeBonus = 0;
+    hintsAvailable = 3;
+    powerUps = { skip: 1, timeFreeze: 1, doublePoints: 1 };
+    correctAnswers = 0;
+    incorrectAnswers = 0;
+    skippedQuestions = 0;
+    hintsUsed = 0;
+    powerUpsUsed = 0;
+    totalStreakBonus = 0;
+    isDoublePointsActive = false;
+    stopTimer();
+    // Reset UI elements if necessary (e.g., progress bar, score display on quiz page)
+    const scoreDisplay = document.getElementById('score');
+    if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: 0`;
+    const timerDisplay = document.getElementById('timer');
+    if(timerDisplay) timerDisplay.textContent = `⏱️ Time: 15s`;
+    updateProgressBar(); 
+}
+
+function startTimer() {
+    timeLeft = 15;
+    const timerDisplay = document.getElementById('timer');
+    if(timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+
+    timer = setInterval(() => {
+        timeLeft--;
+        if(timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+        if (timeLeft <= 0) {
+            stopTimer();
+            handleTimeUp();
+        }
+    }, 1000);
+}
+
+function stopTimer() {
+    clearInterval(timer);
+}
+
+function handleTimeUp() {
+    if (sounds && sounds.timeup) sounds.timeup.play();
+    // Mark question as incorrect or skipped due to time up
+    incorrectAnswers++; // Or a new category like timeOutAnswers
+    streak = 0;
+    
+    const quizOptionsContainer = document.getElementById('options-container-element');
+    if (quizOptionsContainer) {
+        const buttons = quizOptionsContainer.querySelectorAll('.option-button');
+        buttons.forEach(button => button.disabled = true);
+        // Optionally show correct answer
+        const question = currentQuiz[currentQuestionIndex];
+        if (buttons[question.correct]) {
+            buttons[question.correct].classList.add('correct', 'border-green-500');
+        }
     }
+    
+    const nextBtn = document.getElementById('next-question-button-element');
+    if (nextBtn) nextBtn.classList.remove('hidden');
+    // alert("Time's up!"); // Optional alert
+}
 
-    // Update username everywhere on page load
-    updateUsernameDisplay();
+function showStreakMessage(streakCount) {
+    const streakElement = document.createElement('div');
+    streakElement.textContent = `${streakCount} in a row! Streak bonus!`;
+    streakElement.className = 'streak-message fixed top-20 right-5 bg-green-500 text-white p-3 rounded-lg shadow-lg animate-pulse';
+    document.body.appendChild(streakElement);
+    setTimeout(() => {
+        if (document.body.contains(streakElement)) {
+            document.body.removeChild(streakElement);
+        }
+    }, 3000);
+}
 
-    // Fix: Attach event listener to the rules acknowledge button
-    const understandBtn = document.getElementById('understand-button');
-    if (understandBtn) {
-        understandBtn.onclick = function() {
-            document.getElementById('rules-container').classList.add('hidden');
-            // Start the quiz with selected theme and level
-            const theme = document.getElementById('theme').value;
-            const level = document.getElementById('level').value;
-            startQuiz(theme, level);
-        };
-    }
-});
 
-// Initialize everything when the DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     initializeDOMElements();
-    hideAllContainers();
-    showContainer(landingPage);
-    add3DEffects();
-    initializeTheme();
-
-    // Add theme toggle event listener
-    if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme);
+    initializeTheme(); 
+    loadUserProfile(); 
+    // Removed initializeLeaderboard call
+    
+    if (landingPage) {
+        showContainer(landingPage);
+    } else {
+        console.error("Landing page element not found. Cannot show initial container.");
+        document.body.style.display = 'block';
     }
 });
-
-// Theme toggle functionality
-function toggleTheme() {
-    const isDarkTheme = document.body.classList.toggle('dark-theme');
-    localStorage.setItem('darkTheme', isDarkTheme);
-    
-    // Update theme toggle icon
-    if (themeToggle) {
-        const icon = themeToggle.querySelector('svg');
-        if (icon) {
-            if (isDarkTheme) {
-                // Sun icon for dark mode (to switch to light)
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
-            } else {
-                // Moon icon for light mode (to switch to dark)
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />';
-            }
-        }
-    }
-}
-
-// Initialize theme on page load
-function initializeTheme() {
-    const isDarkTheme = localStorage.getItem('darkTheme') === 'true';
-    if (isDarkTheme) {
-        document.body.classList.add('dark-theme');
-        if (themeToggle) {
-            const icon = themeToggle.querySelector('svg');
-            if (icon) {
-                // Sun icon for dark mode (to switch to light)
-                icon.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" />';
-            }
-        }
-    }
-}
-
-// Add function to show rules
-function showRules(theme, level) {
-    const rulesContainer = document.getElementById('rules-container');
-    if (rulesContainer) {
-        hideAllContainers();
-        rulesContainer.classList.remove('hidden');
-        
-        // Add animation class
-        rulesContainer.classList.add('animate-fade-in');
-        // Attach event to "I Understand, Start Quiz!" button
-        const understandBtn = document.getElementById('understand-button');
-        if (understandBtn) {
-            understandBtn.onclick = function() {
-                rulesContainer.classList.add('hidden');
-                startQuizCore(theme, level);
-            };
-        }
-    } else {
-        // If rules container is not found, create a simple modal with rules
-     const modal = document.createElement('div');
-        modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
-        
-        const content = document.createElement('div');
-        content.className = 'bg-white dark:bg-gray-800 p-8 rounded-lg max-w-lg w-full';
-        content.innerHTML = `
-            <h2 class="text-2xl font-bold mb-4">Quiz Rules</h2>
-            <ul class="list-disc pl-5 mb-4">
-                <li>You will have 15 seconds to answer each question</li>
-                <li>Correct answers earn you points</li>
-                <li>Answering quickly gives you bonus points</li>
-                <li>Use powerups wisely to improve your score</li>
-            </ul>
-            <button id="modal-start-button" class="w-full bg-indigo-600 text-white py-2 px-4 rounded">
-                I Understand, Start Quiz!
-            </button>
-        `;
-        
-        modal.appendChild(content);
-        document.body.appendChild(modal);
-          document.getElementById('modal-start-button').addEventListener('click', () => {
-            document.body.removeChild(modal);
-            startQuizCore(theme, level);
-        });
-    }
-}
-
-// Fix: Results page display logic
-function showResultsPage(finalScore) {
-    // Hide quiz container
-    quizContainer.classList.add('hidden');
-    // Show results page
-    const resultsPage = document.getElementById('results-page');
-    if (resultsPage) {
-        resultsPage.classList.remove('hidden');
-        // Update results
-        document.getElementById('final-score').textContent = finalScore;
-        document.getElementById('correct-answers').textContent = correctAnswers;
-        document.getElementById('time-taken').textContent = `${15 * currentQuiz.length - totalTimeBonus}s`;
-        document.getElementById('accuracy').textContent = `${Math.round((correctAnswers / currentQuiz.length) * 100)}%`;
-        // Restart button
-        const restartBtn = document.getElementById('restart-quiz');
-        if (restartBtn) {
-            restartBtn.onclick = () => {
-                resultsPage.classList.add('hidden');
-                showContainer(landingPage);
-                resetQuizState();
-            };
-        }        // View profile button
-        const viewProfileBtn = document.getElementById('view-profile-btn');
-        if (viewProfileBtn) {
-            viewProfileBtn.onclick = function() {
-                window.location.href = 'profile.html';
-            };
-        }
-    }
- }
