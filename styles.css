@@ -5,7 +5,7 @@ body {
     margin: 0;
     padding: 0;
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: radial-gradient(circle at top left, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%), linear-gradient(135deg, #1a1a1a 0%, #0d0d0d 100%);
     background-size: 400% 400%;
     animation: gradientBG 15s ease infinite;
     transition: all 0.5s ease;
@@ -130,12 +130,53 @@ body {
 }
 
 /* Card animations */
-.card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+.card, .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#badge-notification {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 15rem;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+#badge-notification.show {
+    transform: translateX(0);
+}
+
+nav {
+    background: transparent; /* Merged with home page background */
+    border-radius: 24px;
+    border: none; /* Removed border for seamless look */
+    box-shadow: none; /* Removed shadow for seamless look */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+nav a {
+    transition: all 0.3s ease;
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+}
+
+nav a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-2px);
 }
 
 @keyframes cardAppear {
@@ -151,7 +192,9 @@ body {
 
 .card:hover {
     transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Score animation */
@@ -174,15 +217,22 @@ body {
 
 /* Responsive design */
 @media (max-width: 768px) {
-#app {
+    #app {
         padding: 1rem;
         max-width: 100%;
     }
 
-    .card {
+    .card,
+    .glass-card {
         padding: 1.5rem;
         margin: 1rem;
         width: calc(100% - 2rem);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #question {
@@ -194,24 +244,25 @@ body {
     .option-button {
         padding: 0.8rem 1.5rem;
         font-size: 0.9rem;
-    width: 100%;
+        width: 100%;
         margin: 0.5rem 0;
     }
 
-    #timer, #score {
+    #timer,
+    #score {
         font-size: 1.2rem;
         margin: 0.5rem 0;
     }
 
     #options {
-    display: flex;
-    flex-direction: column;
+        display: flex;
+        flex-direction: column;
         gap: 0.5rem;
         padding: 0 1rem;
     }
 
     #next-button {
-    width: 100%;
+        width: 100%;
         margin: 1rem 0;
         padding: 1rem;
     }
@@ -237,10 +288,17 @@ body {
         padding: 0.5rem;
     }
 
-    .card {
+    .card,
+    .glass-card {
         padding: 1rem;
         margin: 0.5rem;
         width: calc(100% - 1rem);
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #question {
@@ -253,7 +311,8 @@ body {
         font-size: 0.8rem;
     }
 
-    #timer, #score {
+    #timer,
+    #score {
         font-size: 1rem;
     }
 
@@ -288,8 +347,15 @@ body {
 
 /* Landscape mode adjustments */
 @media (max-height: 480px) and (orientation: landscape) {
-    .card {
+    .card,
+    .glass-card {
         padding: 0.8rem;
+        background: rgba(255, 255, 255, 0.08);
+        backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 1.5rem;
+        box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     #question {
@@ -302,20 +368,54 @@ body {
         font-size: 0.8rem;
     }
 
-    #timer, #score {
+    #timer,
+    #score {
         font-size: 0.9rem;
     }
 }
-
 /* Dark theme support */
 .dark-theme {
     background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     color: #ffffff;
 }
 
-.dark-theme .card {
-    background: rgba(26, 26, 46, 0.95);
-    color: #ffffff;
+.dark-theme .card, .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#badge-notification {
+    position: fixed;
+    top: 1.5rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 18rem;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+#badge-notification.show {
+    transform: translateX(0);
+}
+
+
+.dark-theme nav {
+    background: transparent; /* Merged with home page background */
+    border-radius: 24px;
+    border: none; /* Removed border for seamless look */
+    box-shadow: none; /* Removed shadow for seamless look */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .dark-theme .option-button {
@@ -472,14 +572,40 @@ input:focus, select:focus {
 }
 
 /* Enhanced card styles */
+.card, .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#badge-notification {
+    position: fixed;
+    top: 1.5rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 18rem;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+#badge-notification.show {
+    transform: translateX(0);
+}
+
+
 .card {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(15px);
-    border-radius: 25px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-    padding: 2rem;
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: fadeScale 0.6s ease-out;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: float 3s infinite;
 }
 
 .card:hover {
@@ -1041,6 +1167,36 @@ input:focus, select:focus {
 }
 
 /* Enhanced 3D Effects */
+.card, .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#badge-notification {
+    position: fixed;
+    top: 1.5rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 18rem;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+#badge-notification.show {
+    transform: translateX(0);
+}
+
 .card {
     transform-style: preserve-3d;
     transition: transform 0.3s ease;
@@ -1141,20 +1297,79 @@ input:focus, select:focus {
 }
 
 /* Modern Card Hover Effects */
-.card {
+.card, .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+#badge-notification {
+    position: fixed;
+    top: 1.5rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 18rem;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+#badge-notification.show {
+    transform: translateX(0);
+}
+
+
+ 
 .card:hover {
     transform: translateY(-10px) scale(1.02);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.15);
 }
 
 /* Enhanced Dark Theme */
-.dark-theme .card {
+.dark-theme .card,
+.dark-theme .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1.5rem;
+    box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     background: rgba(26, 26, 46, 0.95);
     border: 1px solid rgba(255, 255, 255, 0.1);
 }
+
+#badge-notification {
+    position: fixed;
+    top: 1.5rem;
+    right: 1rem;
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem;
+    padding: 1rem;
+    width: 18rem;
+    z-index: 50;
+    transform: translateX(100%);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    display: flex;
+    align-items: center;
+}
+
+#badge-notification.show {
+    transform: translateX(0);
+}
+
 
 .dark-theme .stat-card {
     background: rgba(26, 26, 46, 0.95);

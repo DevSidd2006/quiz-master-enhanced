@@ -85,9 +85,8 @@
                             <span class="text-sm text-gray-500 dark:text-gray-400">Reward:</span>
                             <span id="challenge-reward" class="ml-2 font-medium text-green-600 dark:text-green-400">+50 points</span>
                         </div>
-                    </div>
-                    <button id="start-challenge-btn" class="mt-6 w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    </div>                    <button id="start-challenge-btn" class="mt-6 w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-300 flex items-center justify-center transform hover:scale-105" onclick="streakManager.startChallenge()">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="CurrentColor">
                             <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
                         </svg>
                         Accept Challenge
@@ -159,12 +158,27 @@
     <script>
         // Make sure event listeners are set up properly when DOM is loaded
         document.addEventListener('DOMContentLoaded', () => {
+            const themeChangerBtn = document.getElementById('theme-changer-btn');
+            if (themeChangerBtn) {
+                themeChangerBtn.addEventListener('click', toggleTheme);
+            }
+        });
+        document.addEventListener('DOMContentLoaded', () => {
             // Set up the start challenge button
             const startChallengeBtn = document.getElementById('start-challenge-btn');
             if (startChallengeBtn) {
+                // Initialize streakManager if not already initialized
+                if (!window.streakManager) {
+                    window.streakManager = new StreakManager();
+                }
                 startChallengeBtn.addEventListener('click', () => {
                     if (window.streakManager) {
-                        window.streakManager.startChallenge();
+                        try {
+                            window.streakManager.startChallenge();
+                        } catch (error) {
+                            console.error("Challenge start failed:", error);
+                            alert("Could not start challenge. Please try again later.");
+                        }
                     } else {
                         console.error("streakManager not found");
                         alert("Could not start challenge. Please try again later.");

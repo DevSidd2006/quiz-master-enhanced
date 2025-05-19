@@ -5,7 +5,8 @@ const sounds = {
     correct: new Audio('https://assets.mixkit.co/active_storage/sfx/2570/2570-preview.mp3'),
     wrong: new Audio('https://assets.mixkit.co/active_storage/sfx/2571/2571-preview.mp3'),
     start: new Audio('https://assets.mixkit.co/active_storage/sfx/2572/2572-preview.mp3'),
-    timeup: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3')
+    timeup: new Audio('https://assets.mixkit.co/active_storage/sfx/2573/2573-preview.mp3'),
+    badge: new Audio('images/opening-144757.mp3')
 };
 
 // Quiz state variables
@@ -604,7 +605,7 @@ function endQuiz() {
         };
         userProfile.recentActivity = userProfile.recentActivity || [];
         userProfile.recentActivity.unshift({ type: 'quiz', score: finalScore, theme: quizTheme, level: quizLevel, date: new Date().toISOString() });
-        if (userProfile.recentActivity.length > 20) userProfile.recentActivity = userProfile.recentActivity.slice(0, 20);
+        if (userProfile.recentActivity.length > 10) userProfile.recentActivity = userProfile.recentActivity.slice(0, 10);
 
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
 
@@ -749,8 +750,8 @@ function awardBadge(badgeId) {
         achievementName: badge.title
     });
 
-    if (userProfile.recentActivity.length > 20) {
-        userProfile.recentActivity = userProfile.recentActivity.slice(0, 20);
+    if (userProfile.recentActivity.length > 10) {
+        userProfile.recentActivity = userProfile.recentActivity.slice(0, 10);
     }
 
     showBadgeNotification(badge);
@@ -762,7 +763,8 @@ function showBadgeNotification(badge) {
 
     const badgeEmoji = document.getElementById('badge-emoji');
     const badgeTitle = document.getElementById('badge-title');
-    const badgeDescription = document.getElementById('badge-description');
+    const badgeDescription = document.getElementById('badge-description');    // Play badge sound
+    sounds.badge.play().catch(error => console.error("Error playing badge sound:", error));
 
     badgeEmoji.textContent = badge.emoji;
     badgeTitle.textContent = `New Badge: ${badge.title}`;
@@ -1051,10 +1053,46 @@ document.addEventListener('DOMContentLoaded', () => {
     loadUserProfile();
     initializeTabSystem();
 
-    if (landingPage) {
-        showContainer(landingPage);
+    // Check for challenge parameters in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const isChallenge = urlParams.get('challenge') === 'true';
+    const challengeTheme = urlParams.get('theme');
+    const challengeLevel = urlParams.get('level');
+
+    // Function to handle starting a challenge quiz
+    const startChallengeQuiz = () => {
+        if (isChallenge && challengeTheme && challengeLevel) {
+            // Start the daily challenge quiz directly
+            console.log("Starting challenge quiz with theme:", challengeTheme, "and level:", challengeLevel);
+            
+            // Mark the challenge as active in streakManager
+            if (window.streakManager && window.streakManager.streakData) {
+                window.streakManager.streakData.challengeStatus = 'active';
+                window.streakManager.saveStreakData();
+            }
+            
+            startQuizCore(challengeTheme, challengeLevel);
+        } else if (landingPage) {
+            showContainer(landingPage);
+        } else {
+            console.error("Landing page element not found. Cannot show initial container.");
+            document.body.style.display = 'block';
+        }
+    };
+
+    // Check if streakManager is already initialized
+    if (window.streakManager) {
+        startChallengeQuiz();
     } else {
-        console.error("Landing page element not found. Cannot show initial container.");
-        document.body.style.display = 'block';
+        // Wait for streakManager to be initialized
+        let checkCounter = 0;
+        const maxChecks = 10;
+        const checkInterval = setInterval(() => {
+            if (window.streakManager || checkCounter >= maxChecks) {
+                clearInterval(checkInterval);
+                startChallengeQuiz();
+            }
+            checkCounter++;
+        }, 100);
     }
 });
