@@ -30,13 +30,13 @@ A modern, interactive quiz application with beautiful UI, built for learning and
 
 ## Demo
 
-Check out the live demo: [Quiz Master Demo](https://quiz-master-lac.vercel.app/)
+Check out the live demo: [Quiz Master Demo](https://quiz-master-enhanced.vercel.app/)
 
 ## Setup and Installation
 
 1. Clone the repository:
    ```
-   git clone https://github.com/devSidd2006/Quiz_Master.git
+   git clone https://github.com/DevSidd2006/quiz-master-enhanced.git
    ```
 
 2. Navigate to the project directory:
@@ -55,23 +55,6 @@ Check out the live demo: [Quiz Master Demo](https://quiz-master-lac.vercel.app/)
 
 4. The application should now be running at `http://localhost:8000` or similar.
 
-## Project Structure
-
-```
-Quiz_Master/
-├── index.html          # Main HTML file
-├── styles.css          # CSS styles with animations and responsive design
-├── scripts/            # JavaScript files
-│   ├── app.js          # Main application logic
-│   ├── questions.js    # Question data management
-│   ├── timer.js        # Timer functionality
-│   └── leaderboard.js  # Leaderboard functionality
-├── assets/             # Images, icons, and other assets
-│   ├── images/         # Images used in the application
-│   └── fonts/          # Custom fonts
-└── README.md           # Project documentation
-```
-
 ## How to Play
 
 1. Start by entering your name and selecting a quiz category
@@ -79,8 +62,7 @@ Quiz_Master/
 3. Receive immediate feedback on whether your answer was correct
 4. Continue through all questions to complete the quiz
 5. View your final score and statistics at the end
-6. Check the leaderboard to see how you rank against other players
-7. Play again to improve your score!
+6. Play again to improve your score!
 
 ## Customization
 
@@ -118,7 +100,7 @@ Contributions are welcome! Please feel free to submit a Pull Request.
 ## Contact
 
 
-Project Link: [https://github.com/devSidd2006/Quiz_Master](https://github.com/devSidd2006/Quiz_Master)
+Project Link: [https://github.com/DevSidd2006/quiz-master-enhanced.git](https://github.com/DevSidd2006/quiz-master-enhanced.git)
 
 ## Acknowledgements
 
