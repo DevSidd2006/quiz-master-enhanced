@@ -2,29 +2,13 @@
 
 A modern, interactive quiz application with beautiful UI, built for learning and fun.
 
-## Application Screenshots
-
-### Home Page
-![Home Page](./images/home_page.png)
-
-### Quiz Rules
-![Quiz Rules](./images/Rules.png)
-
-### Quiz Interface
-![Quiz Interface](./images/quiz.png)
-
-### Results Page
-![Results Page](./images/result.png)
-
-### Leaderboard
-![Leaderboard](./images/leaderboard.png)
-
 ## Features
 
-- **Beautiful UI** with modern gradient backgrounds and animations
-- **Responsive design** that works on desktop, tablet, and mobile devices
+- **Enhanced UI** with modern gradient backgrounds, animations, and improved responsiveness
 - **Interactive quizzes** with multiple-choice questions
-- **5 questions per quiz** for quick and engaging sessions
+- **Daily Challenges** to test your skills with unique quizzes each day
+- **Streak Tracking** to monitor your consecutive days of playing and completing challenges
+- **Achievements** to reward your progress and milestones
 - **Real-time feedback** on correct and incorrect answers
 - **Timer** for each question to add pressure and excitement
 - **Score tracking** with animated scoring system
@@ -32,6 +16,7 @@ A modern, interactive quiz application with beautiful UI, built for learning and
 - **Leaderboard** to compare scores with other players
 - **Statistics** to track performance over time
 - **Categories** of questions to choose from
+- **Difficulty Levels** (Easy, Medium, Hard) for standard quizzes
 - **Dark mode** support for comfortable night-time use
 - **Animations and transitions** throughout the app for a polished feel
 - **Mobile-first design** with landscape mode support
@@ -138,4 +123,4 @@ Project Link: [https://github.com/devSidd2006/Quiz_Master](https://github.com/de
 ## Acknowledgements
 
 - [Font Awesome](https://fontawesome.com) for icons
-- [Google Fonts](https://fonts.google.com/) for typography 
+- [Google Fonts](https://fonts.google.com/) for typography
