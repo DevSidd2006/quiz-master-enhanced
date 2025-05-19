@@ -1,4 +1,5 @@
 import { quizQuestions, getRandomQuestions } from './questions.js';
+import achievementManager from './achievements.js';
 
 // Sound effects
 const sounds = {
@@ -27,6 +28,7 @@ let skippedQuestions = 0;
 let hintsUsed = 0;
 let powerUpsUsed = 0;
 let totalStreakBonus = 0;
+let currentQuizIsChallenge = false; // Added for tracking challenge state
 
 // Add scoring constants
 const SCORING = {
@@ -289,6 +291,7 @@ function handleUserRegistration(event) {
         }
 
         if (registrationModal) registrationModal.style.display = 'none';
+        achievementManager.checkAllAchievements(); // General check after registration
         alert('Welcome, ' + username + '!');
     } else {
         alert('Please enter both username and email.');
@@ -318,7 +321,8 @@ function showRulesBeforeQuiz() {
     }
 }
 
-function startQuizCore(theme, level) {
+function startQuizCore(theme, level, isChallenge = false) { // Modified signature
+    currentQuizIsChallenge = isChallenge; // Added to set challenge state
     if (!theme && themeSelect) theme = themeSelect.value;
     if (!level && levelSelect) level = levelSelect.value;
 
@@ -374,10 +378,6 @@ function startQuizCore(theme, level) {
             alert("No questions available for this theme/level. Please try different options.");
             showContainer(landingPage);
             return;
-        }
-        // Increment streak when quiz starts
-        if (window.streakManager) {
-            window.streakManager.incrementStreak();
         }
         showQuestion();
     }, 1000);
@@ -610,11 +610,23 @@ function endQuiz() {
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
 
         checkForBadges();
+        achievementManager.checkAllAchievements({ 
+            type: 'quiz_completed', 
+            quizResult: { 
+                score: finalScore, 
+                correctAnswers: correctAnswers, 
+                totalQuestions: currentQuiz.length, 
+                accuracy: accuracy 
+            }, 
+            quizDifficulty: quizLevel.toLowerCase(), 
+            quizCategory: quizTheme 
+        });
 
-        const urlParams = new URLSearchParams(window.location.search);
-        const isChallenge = urlParams.get('challenge') === 'true';
+        if (!currentQuizIsChallenge && window.streakManager) { // Modified to use currentQuizIsChallenge
+            window.streakManager.incrementStreak();
+        }
 
-        if (isChallenge) {
+        if (currentQuizIsChallenge) { // Modified to use currentQuizIsChallenge
             if (window.streakManager) {
                 window.streakManager.completeChallenge({
                     score: finalScore,
@@ -810,6 +822,7 @@ function toggleTheme() {
         localStorage.setItem('theme', 'dark');
         if (themeToggleIcon) themeToggleIcon.innerHTML = sunIcon;
     }
+    achievementManager.checkAllAchievements({ type: 'theme_changed' });
 }
 
 function initializeTabSystem() {

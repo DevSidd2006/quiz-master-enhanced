@@ -106,6 +106,16 @@
     </style>
 </head>
 <body>
+    <!-- Badge/Achievement Notification -->
+    <div id="badge-notification" class="fixed top-24 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 w-72 z-50 transform translate-x-full opacity-0 transition-all duration-500 ease-in-out flex items-center">
+        <div class="notification-emoji-bg bg-indigo-100 dark:bg-indigo-900 rounded-full p-3 mr-4">
+            <span id="badge-emoji" class="text-2xl">🏆</span>
+        </div>
+        <div>
+            <h4 id="badge-title" class="font-bold text-gray-900 dark:text-white">Notification Title</h4>
+            <p id="badge-description" class="text-sm text-gray-600 dark:text-gray-300">Notification message here.</p>
+        </div>
+    </div>
     <!-- Theme Changer Floating Button -->
     <button id="theme-changer-btn" title="Toggle Theme" class="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-4 rounded-full shadow-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center justify-center focus:outline-none">
         <svg id="theme-changer-icon" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -161,9 +171,16 @@
 
             <!-- Achievements Section -->
             <div class="mb-10">
-                <h3 class="text-2xl font-bold mb-4 text-gray-800">Achievements</h3>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="achievements-grid">
-                    <!-- Achievement cards will be dynamically added here -->
+                <h3 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100">Achievements</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4" id="achievements-grid">
+                    <!-- Achievement cards will be dynamically added here by achievements.js -->
+                    <!-- Example of a loading state or placeholder if needed -->
+                    <!-- 
+                    <div class="achievement-card p-4 rounded-lg shadow-md flex flex-col items-center justify-center text-center bg-gray-100 dark:bg-gray-700 opacity-60">
+                        <div class="text-4xl mb-2">⏳</div>
+                        <h4 class="font-semibold text-md mb-1 text-gray-800 dark:text-gray-100">Loading...</h4>
+                    </div> 
+                    -->
                     <div class="achievement-card">
                         <div class="achievement-icon">🎯</div>
                         <h4 class="font-semibold">First Steps</h4>
@@ -226,6 +243,17 @@
         setTheme(!isDark);
     });
     </script>
-    <script src="profile.js"></script>
+    <script src="script.js" type="module"></script>
+    <script src="achievements.js" type="module"></script> <!-- Added achievements.js -->
+    <script src="profile.js" type="module"></script>
+    <script type="module">
+        // Ensure achievements are rendered when the page loads
+        import achievementManager from './achievements.js';
+        document.addEventListener('DOMContentLoaded', () => {
+            if (document.getElementById('achievements-grid')) {
+                achievementManager.renderAchievements();
+            }
+        });
+    </script>
 </body>
 </html>

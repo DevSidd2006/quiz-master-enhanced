@@ -1,4 +1,6 @@
 // Profile Management
+import achievementManager from './achievements.js';
+
 class ProfileManager {
     constructor() {
         this.profileData = this.loadProfileData();
@@ -61,6 +63,7 @@ class ProfileManager {
                         this.profileData.avatar = ev.target.result;
                         avatarImg.src = ev.target.result;
                         this.saveProfileData();
+                        achievementManager.checkAllAchievements({ type: 'avatar_changed' });
                     };
                     reader.readAsDataURL(file);
                 }
@@ -123,29 +126,10 @@ class ProfileManager {
         document.getElementById('profile-quizzes-completed').textContent = this.profileData.totalQuizzes || 0;
         document.getElementById('profile-average-score').textContent = Math.round(this.profileData.averageScore) || 0;
 
-        // Achievements
-        this.updateAchievements();
+        // Achievements are now rendered by achievementManager in profile.html
 
         // Recent activity
         this.updateRecentActivity();
-    }
-
-    updateAchievements() {
-        // Map achievement keys to DOM elements/classes
-        const achievements = {
-            'first_quiz': document.getElementById('achievement-first-quiz'),
-            'streak_master': document.getElementById('achievement-streak-master'),
-            'top_10': document.getElementById('achievement-top-10')
-        };
-        Object.keys(achievements).forEach(key => {
-            if (achievements[key]) {
-                if (this.profileData.achievements && this.profileData.achievements.includes(key)) {
-                    achievements[key].classList.remove('locked');
-                } else {
-                    achievements[key].classList.add('locked');
-                }
-            }
-        });
     }
 
     updateRecentActivity() {

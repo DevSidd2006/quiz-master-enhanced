@@ -1,5 +1,5 @@
 // Streak and Daily Challenges Management
-import badgeManager from './badges.js';
+import badgeManager, { showCustomNotification } from './badges.js';
 import { BADGES } from './script.js';
 
 // Constants for streak and challenges
@@ -69,6 +69,11 @@ class StreakManager {
             currentStreakEl.textContent = this.streakData.currentStreak;
         }
 
+        const highestStreakValueEl = document.getElementById('highest-streak-value');
+        if (highestStreakValueEl) {
+            highestStreakValueEl.textContent = this.streakData.highestStreak || 0;
+        }
+
         if (document.getElementById('streak-calendar')) {
             this.renderStreakCalendar();
         }
@@ -120,21 +125,22 @@ class StreakManager {
 
     checkDailyReset() {
         const now = new Date();
-        const lastActivity = this.streakData.lastActivity ? new Date(this.streakData.lastActivity) : null;
+        const lastActivityTime = this.streakData.lastActivity ? new Date(this.streakData.lastActivity) : null;
 
-        if (!lastActivity) {
-            return;
+        if (lastActivityTime) {
+            const hoursSinceLastActivity = (now - lastActivityTime) / (1000 * 60 * 60);
+            if (hoursSinceLastActivity > STREAK_CONFIG.STREAK_EXPIRY) {
+                this.resetStreak();
+                // After reset, a new challenge might still be needed for the current day
+            }
         }
 
-        const hoursSinceLastActivity = (now - lastActivity) / (1000 * 60 * 60);
+        // Generate a new daily challenge if it's a new calendar day 
+        // or if no challenge exists for the current day.
+        const currentChallengeDate = this.streakData.currentChallenge ? new Date(this.streakData.currentChallenge.date).toDateString() : null;
+        const todayString = now.toDateString();
 
-        if (hoursSinceLastActivity > STREAK_CONFIG.STREAK_EXPIRY) {
-            this.resetStreak();
-            return;
-        }
-
-        const isNewDay = now.toDateString() !== lastActivity.toDateString();
-        if (isNewDay) {
+        if (todayString !== currentChallengeDate) {
             this.generateDailyChallenge();
         }
     }
@@ -151,25 +157,31 @@ class StreakManager {
         }
     }
 
-    incrementStreak() {
-        const today = new Date().toISOString().split('T')[0];
+    incrementStreak() { // Called after any qualifying activity (e.g., quiz completion)
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
 
-        if (this.streakData.streakDates.includes(today)) {
-            return;
+        // Always update lastActivity to the time of this activity
+        this.streakData.lastActivity = now.toISOString();
+
+        // Increment streak only if it's a new day for the streak
+        if (!this.streakData.streakDates.includes(today)) {
+            this.streakData.currentStreak++;
+            this.streakData.streakDates.push(today);
+
+            if (this.streakData.currentStreak > this.streakData.highestStreak) {
+                this.streakData.highestStreak = this.streakData.currentStreak;
+            }
+            
+            if (badgeManager && typeof badgeManager.checkForStreakBadges === 'function') {
+                badgeManager.checkForStreakBadges(this.streakData.currentStreak);
+            } else {
+                console.warn("badgeManager or checkForStreakBadges not available.");
+            }
         }
-
-        this.streakData.currentStreak++;
-        this.streakData.streakDates.push(today);
-        this.streakData.lastActivity = new Date().toISOString();
-
-        if (this.streakData.currentStreak > this.streakData.highestStreak) {
-            this.streakData.highestStreak = this.streakData.currentStreak;
-        }
-
+        
         this.saveStreakData();
-        badgeManager.checkForStreakBadges(this.streakData.currentStreak);
-
-        this.updateAllUI();
+        this.updateAllUI(); // Updates current streak, highest streak, and other related UI
     }
 
     generateDailyChallenge() {
@@ -254,24 +266,46 @@ class StreakManager {
     startChallenge() {
         console.log("Starting challenge...");
         const today = new Date().toISOString().split('T')[0];
-        if (this.streakData.lastChallengeStartDate === today) {
-            alert("You can only attempt the daily challenge once per day.");
-            return;
-        }
-        if (!this.streakData.currentChallenge) {
+
+        // Ensure a challenge for today exists or generate one
+        if (!this.streakData.currentChallenge || this.streakData.currentChallenge.date !== today) {
             this.generateDailyChallenge();
+            if (!this.streakData.currentChallenge || this.streakData.currentChallenge.date !== today) {
+                console.error("Failed to ensure/create a challenge for today.");
+                showCustomNotification("Challenge Error", "Could not prepare the daily challenge. Please try again.", "🚨");
+                return;
+            }
         }
-        if (!this.streakData.currentChallenge) {
-            console.error("Failed to create a challenge");
-            alert("Could not start challenge. Please try again later.");
+
+        // Check if this specific challenge instance has already been completed or failed
+        const challengeAlreadyProcessed = this.streakData.challengeHistory.find(
+            c => c.id === this.streakData.currentChallenge.id && (c.completed === true || c.completed === false)
+        );
+
+        if (challengeAlreadyProcessed) {
+            showCustomNotification("Challenge Status", `You have already ${challengeAlreadyProcessed.completed ? 'completed' : 'failed'} today's challenge.`, "🗓️");
             return;
         }
-        this.streakData.lastChallengeStartDate = today;
+        
+        // If lastChallengeStartDate is today, it means user clicked "Start" already.
+        // The updateChallengeUI() handles disabling the button, this is an extra check.
+        if (this.streakData.lastChallengeStartDate === today && this.streakData.challengeStatus !== 'pending') {
+             // If it's active, let them proceed. If completed/failed, the check above handles it.
+             // If pending, it means something went wrong or it's a fresh day.
+        }
+
+        this.streakData.lastChallengeStartDate = today; // Mark that a challenge start was initiated today
         this.streakData.challengeStatus = 'active';
         this.saveStreakData();
+        
+        showCustomNotification("Challenge Accepted!", `"${this.streakData.currentChallenge.description}" Good luck!`, '🚀');
+        
         console.log("Challenge details:", this.streakData.currentChallenge);
         const challenge = this.streakData.currentChallenge;
-        window.location.href = `index.html?challenge=true&theme=${encodeURIComponent(challenge.category)}&level=${encodeURIComponent(challenge.difficulty.toLowerCase())}`;
+        // Delay redirect slightly to allow notification to be seen
+        setTimeout(() => {
+            window.location.href = `index.html?challenge=true&theme=${encodeURIComponent(challenge.category)}&level=${encodeURIComponent(challenge.difficulty.toLowerCase())}`;
+        }, 700); 
     }
 
     completeChallenge(result) {
@@ -312,8 +346,17 @@ class StreakManager {
         });
 
         this.streakData.challengeStatus = success ? 'completed' : 'failed';
-        this.saveStreakData();
+        this.streakData.lastChallengeStartDate = new Date().toISOString().split('T')[0]; // Update last challenge start date to today
+        // saveStreakData() will be called by incrementStreak()
         this.updateChallengeUI();
+
+        this.incrementStreak(); // Record activity and update streak if applicable
+
+        if (success) {
+            showCustomNotification("Challenge Complete!", `You earned ${STREAK_CONFIG.DAILY_CHALLENGE_POINTS} points. Well done!`, '🎉');
+        } else {
+            showCustomNotification("Challenge Failed", `You still earned ${STREAK_CONFIG.DAILY_CHALLENGE_POINTS} points for trying. Keep it up!`, '😔');
+        }
         return success;
     }
     

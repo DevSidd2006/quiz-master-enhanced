@@ -73,6 +73,35 @@ class BadgeManager {
     }
 }
 
-// Export BadgeManager
-const badgeManager = new BadgeManager();
-export default badgeManager;
+// Initialize badge manager
+const badgeManagerInstance = new BadgeManager();
+
+export function showCustomNotification(title, message, emoji = 'ℹ️', duration = 3000) {
+    const notificationElement = document.getElementById('badge-notification');
+    const emojiElement = document.getElementById('badge-emoji');
+    const titleElement = document.getElementById('badge-title');
+    const descriptionElement = document.getElementById('badge-description');
+
+    if (!notificationElement || !emojiElement || !titleElement || !descriptionElement) {
+        console.warn('Notification elements not found. Cannot display custom notification.');
+        // Fallback to alert if elements are missing
+        alert(`${emoji} ${title}\n${message}`);
+        return;
+    }
+
+    emojiElement.textContent = emoji;
+    titleElement.textContent = title;
+    descriptionElement.textContent = message;
+
+    // Show notification
+    notificationElement.classList.remove('translate-x-full');
+    notificationElement.classList.add('translate-x-0');
+
+    // Hide after duration
+    setTimeout(() => {
+        notificationElement.classList.remove('translate-x-0');
+        notificationElement.classList.add('translate-x-full');
+    }, duration);
+}
+
+export default badgeManagerInstance;
