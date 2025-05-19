@@ -12,12 +12,12 @@ const sounds = {
 let currentQuiz = [];
 let currentQuestionIndex = 0;
 let score = 0;
-let timer;
+let timer = null; // Explicitly initialize timer as null
 let timeLeft = 15;
 let userAnswers = [];
 let streak = 0;
-let timeBonus = 0; // This seems to be for a single question
-let totalTimeBonus = 0; // Accumulates timeBonus over the quiz
+let timeBonus = 0;
+let totalTimeBonus = 0;
 let hintsAvailable = 3;
 let powerUps = { skip: 1, timeFreeze: 1, doublePoints: 1 };
 let correctAnswers = 0;
@@ -30,18 +30,50 @@ let totalStreakBonus = 0;
 // Add scoring constants
 const SCORING = {
     BASE_POINTS: 10,
-    TIME_BONUS_MULTIPLIER: 0.67, // 67% of base points possible as time bonus
+    TIME_BONUS_MULTIPLIER: 0.67,
     STREAK_BONUS: {
-        3: 5,  // 5 points bonus at 3 correct answers
-        5: 10  // 10 points bonus at 5 correct answers
+        3: 5,
+        5: 10
     },
-    MIN_TIME_FOR_BONUS: 5 // Minimum seconds required for time bonus
+    MIN_TIME_FOR_BONUS: 5
 };
+
+// Define badge categories and achievement badges
+const BADGES = {
+    QUIZ_COUNT: {
+        first_quiz: { emoji: '🎯', title: 'First Steps', description: 'Complete your first quiz' },
+        quiz_5: { emoji: '🏆', title: 'Quiz Enthusiast', description: 'Complete 5 quizzes' },
+        quiz_10: { emoji: '🎖️', title: 'Quiz Master', description: 'Complete 10 quizzes' },
+        quiz_25: { emoji: '👑', title: 'Quiz Champion', description: 'Complete 25 quizzes' }
+    },
+    SCORE_TOTAL: {
+        score_100: { emoji: '💯', title: 'Century', description: 'Reach 100 total points' },
+        score_500: { emoji: '🌟', title: 'Rising Star', description: 'Reach 500 total points' },
+        score_1000: { emoji: '✨', title: 'Superstar', description: 'Reach 1,000 total points' }
+    },
+    SCORE_SINGLE: {
+        perfect_quiz: { emoji: '🎯', title: 'Perfectionist', description: 'Score 100% on a quiz' },
+        high_score_50: { emoji: '🚀', title: 'High Flyer', description: 'Score 50+ points in a single quiz' }
+    },
+    STREAK: {
+        streak_3: { emoji: '🔥', title: 'Spark', description: 'Maintain a 3-day streak' },
+        streak_7: { emoji: '🔥', title: 'Ignite', description: 'Maintain a 7-day streak' },
+        streak_14: { emoji: '🔥', title: 'Blaze', description: 'Maintain a 14-day streak' },
+        streak_30: { emoji: '🔥', title: 'Inferno', description: 'Maintain a 30-day streak' }
+    },
+    SPECIAL: {
+        speed_demon: { emoji: '⚡', title: 'Speed Demon', description: 'Complete a quiz with at least 30 seconds left' },
+        comeback_kid: { emoji: '🔄', title: 'Comeback Kid', description: 'Win after being behind' }
+    }
+};
+
+// Export BADGES for other modules
+export { BADGES };
 
 // Add to quiz state variables
 let userProfile = {
     username: '',
-    email: '', // Added for registration
+    email: '',
     memberSince: null,
     totalQuizzes: 0,
     highestScore: 0,
@@ -59,10 +91,10 @@ let userProfile = {
 
 // Update penalty constants
 const PENALTIES = {
-    HINT: 5,     // 5 points penalty per hint used
-    SKIP: 10,    // 10 points penalty per skip
-    TIME_FREEZE: 10, // 10 points penalty per time freeze
-    DOUBLE_POINTS: 10 // 10 points penalty per double points used
+    HINT: 5,
+    SKIP: 10,
+    TIME_FREEZE: 10,
+    DOUBLE_POINTS: 10
 };
 
 // DOM Elements
@@ -70,22 +102,22 @@ let landingPage;
 let quizContainer;
 let rulesContainer;
 let resultsPage;
-let profileModal; // Was profilePage, renamed for clarity as it's a modal in index.html
+let profileModal;
 let registrationModal;
 
-let themeSelect; // Existing
-let levelSelect; // Existing
-let usernameInput; // For landing page username
+let themeSelect;
+let levelSelect;
+let usernameInput;
 
 // Buttons
-let startQuizButton; // Existing
-let understandButton; // For rules page
-let viewProfileButton; // Navbar profile button
+let startQuizButton;
+let understandButton;
+let viewProfileButton;
 let closeProfileModalButton;
 let playAgainButtonResults;
 let closeRegistrationModalButton;
 let registrationForm;
-let themeToggle; // Existing
+let themeToggle;
 
 // Input fields for registration
 let usernameRegistrationInput;
@@ -105,14 +137,7 @@ let profileTotalQuizzesDisplay;
 let profileHighestScoreDisplay;
 let profileAverageScoreDisplay;
 
-// Elements dynamically created/referenced within showQuestion
-// let questionElement;
-// let optionsElement;
-// let nextButton;
-// let scoreElement; // For quiz score display
-// let timerElement; // For quiz timer display
-
-let isDoublePointsActive = false; // Flag for double points power-up
+let isDoublePointsActive = false;
 
 // Initialize DOM elements
 function initializeDOMElements() {
@@ -120,7 +145,7 @@ function initializeDOMElements() {
     quizContainer = document.getElementById('quiz-container');
     rulesContainer = document.getElementById('rules-container');
     resultsPage = document.getElementById('results-page');
-    profileModal = document.getElementById('profile-page'); // This is the modal container
+    profileModal = document.getElementById('profile-page');
     registrationModal = document.getElementById('registration-modal');
 
     themeSelect = document.getElementById('theme');
@@ -130,39 +155,35 @@ function initializeDOMElements() {
     themeToggle = document.getElementById('theme-toggle');
 
     understandButton = document.getElementById('understand-button');
-    viewProfileButton = document.getElementById('view-profile-btn'); // This ID should match the one in results page if it's the same button
+    viewProfileButton = document.getElementById('view-profile-btn');
     closeProfileModalButton = document.getElementById('close-profile-modal-button');
-    playAgainButtonResults = document.getElementById('restart-quiz'); // Corrected ID from HTML
-    closeRegistrationModalButton = document.getElementById('close-modal'); // Corrected ID from HTML for registration modal close
+    playAgainButtonResults = document.getElementById('restart-quiz');
+    closeRegistrationModalButton = document.getElementById('close-modal');
     registrationForm = document.getElementById('registration-form');
-    usernameRegistrationInput = document.getElementById('reg-username'); // Corrected ID from HTML
-    emailRegistrationInput = document.getElementById('reg-email'); // Corrected ID from HTML
+    usernameRegistrationInput = document.getElementById('reg-username');
+    emailRegistrationInput = document.getElementById('reg-email');
 
-    finalScoreDisplay = document.getElementById('final-score'); // Corrected ID from HTML
-    correctAnswersDisplayResults = document.getElementById('correct-answers'); // Corrected ID from HTML
-    accuracyDisplayResults = document.getElementById('accuracy'); // Corrected ID from HTML
-    totalTimeBonusDisplayResults = document.getElementById('time-taken'); // This was time-taken, assuming it's for time bonus or total time
+    finalScoreDisplay = document.getElementById('final-score');
+    correctAnswersDisplayResults = document.getElementById('correct-answers');
+    accuracyDisplayResults = document.getElementById('accuracy');
+    totalTimeBonusDisplayResults = document.getElementById('time-taken');
 
-    // Profile modal elements might need to be re-verified if profile.html was changed significantly
-    // For now, assuming these IDs are within a modal structure in index.html if profile page is merged
-    profileUsernameDisplay = document.getElementById('profile-username-display'); // Example ID, ensure it exists
-    profileMemberSinceDisplay = document.getElementById('profile-member-since-display'); // Example ID
-    profileTotalQuizzesDisplay = document.getElementById('profile-total-quizzes-display'); // Example ID
-    profileHighestScoreDisplay = document.getElementById('profile-highest-score-display'); // Example ID
-    profileAverageScoreDisplay = document.getElementById('profile-average-score-display'); // Example ID
+    profileUsernameDisplay = document.getElementById('profile-username-display');
+    profileMemberSinceDisplay = document.getElementById('profile-member-since-display');
+    profileTotalQuizzesDisplay = document.getElementById('profile-total-quizzes-display');
+    profileHighestScoreDisplay = document.getElementById('profile-highest-score-display');
+    profileAverageScoreDisplay = document.getElementById('profile-average-score-display');
 
     if (startQuizButton) {
         startQuizButton.addEventListener('click', showRulesBeforeQuiz);
     }
 
     if (themeToggle) {
-        themeToggle.addEventListener('click', toggleTheme); 
+        themeToggle.addEventListener('click', toggleTheme);
     }
-    if (viewProfileButton) { // This button is on the results page
+    if (viewProfileButton) {
         viewProfileButton.addEventListener('click', () => {
-            // Assuming profile.html is a separate page, redirect
-            window.location.href = 'profile.html'; 
-            // If profile is a modal within index.html, use loadAndShowProfileModal();
+            window.location.href = 'profile.html';
         });
     }
     if (closeProfileModalButton) {
@@ -179,9 +200,9 @@ function initializeDOMElements() {
         });
     }
 
-    const registerButton = document.getElementById('register-button'); // Get register button from modal
+    const registerButton = document.getElementById('register-button');
     if (registerButton) {
-        registerButton.addEventListener('click', handleUserRegistration); // Changed form submit to button click
+        registerButton.addEventListener('click', handleUserRegistration);
     }
 
     if (closeRegistrationModalButton) {
@@ -197,7 +218,6 @@ function hideAllContainers() {
     if (quizContainer) quizContainer.classList.add('hidden');
     if (rulesContainer) rulesContainer.classList.add('hidden');
     if (resultsPage) resultsPage.classList.add('hidden');
-    // Modals (profileModal, registrationModal) are handled separately
 }
 
 // Show a specific main page container
@@ -207,13 +227,13 @@ function showContainer(container) {
         container.classList.remove('hidden');
     } else {
         console.error("showContainer: Target container is null or undefined.");
-        if (landingPage) landingPage.classList.remove('hidden'); 
+        if (landingPage) landingPage.classList.remove('hidden');
     }
 }
 
 function loadUserProfile() {
     const storedProfile = localStorage.getItem('userProfile');
-    const navbarUsernameElement = document.getElementById('navbar-username'); // Corrected ID from HTML
+    const navbarUsernameElement = document.getElementById('navbar-username');
 
     if (storedProfile) {
         userProfile = JSON.parse(storedProfile);
@@ -228,7 +248,7 @@ function loadUserProfile() {
         }
     } else {
         if (registrationModal) {
-            registrationModal.style.display = 'block'; // Show modal using style.display
+            registrationModal.style.display = 'block';
         }
         if (navbarUsernameElement) {
             navbarUsernameElement.classList.add('hidden');
@@ -237,12 +257,11 @@ function loadUserProfile() {
 }
 
 function handleUserRegistration(event) {
-    // event.preventDefault(); // Not needed if not a form submit event
     const username = usernameRegistrationInput.value.trim();
     const email = emailRegistrationInput.value.trim();
 
     if (username && email) {
-        userProfile = { 
+        userProfile = {
             username: username,
             email: email,
             memberSince: new Date().toISOString(),
@@ -260,9 +279,9 @@ function handleUserRegistration(event) {
             lastQuiz: null
         };
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
-        
+
         if (usernameInput) usernameInput.value = username;
-        const navbarUsernameElement = document.getElementById('navbar-username'); // Corrected ID
+        const navbarUsernameElement = document.getElementById('navbar-username');
         if (navbarUsernameElement) {
             navbarUsernameElement.textContent = username;
             navbarUsernameElement.classList.remove('hidden');
@@ -275,10 +294,6 @@ function handleUserRegistration(event) {
     }
 }
 
-// Removed loadAndShowProfileModal and updateProfileModalDisplay as profile is a separate page
-
-// Removed all Leaderboard Functions (initializeLeaderboard, saveLeaderboard, addScoreToLeaderboard, updateLeaderboardDisplay, resetLeaderboard)
-
 function showRulesBeforeQuiz() {
     const theme = themeSelect.value;
     const level = levelSelect.value;
@@ -290,25 +305,25 @@ function showRulesBeforeQuiz() {
         if (understandButton) {
             const newUnderstandButton = understandButton.cloneNode(true);
             understandButton.parentNode.replaceChild(newUnderstandButton, understandButton);
-            understandButton = newUnderstandButton; 
+            understandButton = newUnderstandButton;
 
-            understandButton.onclick = () => { 
+            understandButton.onclick = () => {
                 if (rulesContainer) rulesContainer.classList.add('hidden');
                 startQuizCore(theme, level);
             };
         }
     } else {
-        startQuizCore(theme, level); 
+        startQuizCore(theme, level);
     }
 }
 
 function startQuizCore(theme, level) {
     if (!theme && themeSelect) theme = themeSelect.value;
     if (!level && levelSelect) level = levelSelect.value;
-    
+
     let currentUsername = usernameInput ? usernameInput.value.trim() : "";
 
-    if (!currentUsername && userProfile.username) { 
+    if (!currentUsername && userProfile.username) {
         currentUsername = userProfile.username;
         if (usernameInput) usernameInput.value = currentUsername;
     }
@@ -316,33 +331,33 @@ function startQuizCore(theme, level) {
     if (!currentUsername) {
         alert('Please register or enter a username to start the quiz.');
         if (registrationModal && !localStorage.getItem('userProfile')) {
-             registrationModal.style.display = 'block'; 
+            registrationModal.style.display = 'block';
         } else if (usernameInput) {
             usernameInput.focus();
         }
         return;
     }
-    
+
     if (userProfile.username !== currentUsername || !userProfile.email) {
         userProfile.username = currentUsername;
-        if (!userProfile.memberSince) userProfile.memberSince = new Date().toISOString(); 
-        localStorage.setItem('userProfile', JSON.stringify(userProfile)); 
-        
-        const navbarUsernameElement = document.getElementById('navbar-username'); // Corrected ID
+        if (!userProfile.memberSince) userProfile.memberSince = new Date().toISOString();
+        localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+        const navbarUsernameElement = document.getElementById('navbar-username');
         if (navbarUsernameElement) {
             navbarUsernameElement.textContent = currentUsername;
             navbarUsernameElement.classList.remove('hidden');
         }
     }
 
-    resetQuizState(); 
+    resetQuizState();
     showContainer(quizContainer);
-    
+
     const loadingSpinner = document.createElement('div');
-    loadingSpinner.className = 'loading-spinner w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto my-8'; 
-    if (quizContainer) quizContainer.innerHTML = ''; 
+    loadingSpinner.className = 'loading-spinner w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto my-8';
+    if (quizContainer) quizContainer.innerHTML = '';
     if (quizContainer) quizContainer.appendChild(loadingSpinner);
-    
+
     setTimeout(() => {
         if (quizContainer && quizContainer.contains(loadingSpinner)) {
             quizContainer.removeChild(loadingSpinner);
@@ -352,18 +367,21 @@ function startQuizCore(theme, level) {
             showContainer(landingPage);
             return;
         }
-        currentQuiz = getRandomQuestions(theme, level, 5); 
+        currentQuiz = getRandomQuestions(theme, level, 5);
 
         if (!currentQuiz || currentQuiz.length === 0) {
             alert("No questions available for this theme/level. Please try different options.");
             showContainer(landingPage);
             return;
         }
-        showQuestion(); 
-    }, 1000); 
+        // Increment streak when quiz starts
+        if (window.streakManager) {
+            window.streakManager.incrementStreak();
+        }
+        showQuestion();
+    }, 1000);
 }
 
-// ... (showQuestion function remains largely the same, ensure power-up button IDs match if changed)
 function showQuestion() {
     if (!currentQuiz || currentQuestionIndex >= currentQuiz.length || !currentQuiz[currentQuestionIndex]) {
         endQuiz();
@@ -374,7 +392,7 @@ function showQuestion() {
     if (!quizContainer) {
         return;
     }
-    stopTimer(); 
+    stopTimer();
 
     const escapeHTML = (str) => String(str).replace(/[&<>"']/g, match => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[match]);
 
@@ -386,12 +404,11 @@ function showQuestion() {
             </button>
         `;
     });
-    
+
     const hintButtonDisabled = hintsAvailable === 0 ? 'opacity-50 cursor-not-allowed' : '';
     const skipButtonDisabled = (powerUps.skip || 0) === 0 ? 'opacity-50 cursor-not-allowed' : '';
     const timeFreezeButtonDisabled = (powerUps.timeFreeze || 0) === 0 ? 'opacity-50 cursor-not-allowed' : '';
     const doublePointsButtonDisabled = (powerUps.doublePoints || 0) === 0 ? 'opacity-50 cursor-not-allowed' : '';
-
 
     quizContainer.innerHTML = `
         <div class="flex justify-between items-center mb-6">
@@ -430,7 +447,7 @@ function showQuestion() {
             Next Question
         </button>
     `;
-    
+
     const optionButtons = quizContainer.querySelectorAll('.option-button');
     optionButtons.forEach((button, index) => {
         button.addEventListener('click', () => selectAnswer(index));
@@ -443,7 +460,7 @@ function showQuestion() {
     const skipBtn = document.getElementById('skip-button');
     if (skipBtn && (powerUps.skip || 0) > 0) skipBtn.addEventListener('click', useSkip);
     else if (skipBtn) skipBtn.disabled = true;
-    
+
     const freezeBtn = document.getElementById('time-freeze-button');
     if (freezeBtn && (powerUps.timeFreeze || 0) > 0) freezeBtn.addEventListener('click', useTimeFreeze);
     else if (freezeBtn) freezeBtn.disabled = true;
@@ -451,15 +468,18 @@ function showQuestion() {
     const doublePtsBtn = document.getElementById('double-points-button');
     if (doublePtsBtn && (powerUps.doublePoints || 0) > 0) doublePtsBtn.addEventListener('click', useDoublePoints);
     else if (doublePtsBtn) doublePtsBtn.disabled = true;
-    
+
     const nextBtn = document.getElementById('next-question-button-element');
-    if (nextBtn) nextBtn.addEventListener('click', showNextQuestion);
+    if (nextBtn) {
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        newNextBtn.addEventListener('click', showNextQuestion);
+    }
 
     updateProgressBar();
-    startTimer(); 
+    startTimer();
 }
 
-// ... (updateProgressBar function remains the same)
 function updateProgressBar() {
     const progressBarInner = document.getElementById('progress-bar-inner');
     if (progressBarInner && currentQuiz && currentQuiz.length > 0) {
@@ -470,24 +490,23 @@ function updateProgressBar() {
     }
 }
 
-// ... (selectAnswer function remains largely the same)
 function selectAnswer(index) {
     stopTimer();
     const question = currentQuiz[currentQuestionIndex];
     const quizOptionsContainer = document.getElementById('options-container-element');
     if (!quizOptionsContainer) return;
     const buttons = quizOptionsContainer.querySelectorAll('.option-button');
-    
+
     userAnswers[currentQuestionIndex] = index;
     buttons.forEach(button => button.disabled = true);
 
-    const scoreDisplay = document.getElementById('score'); 
+    const scoreDisplay = document.getElementById('score');
 
     if (index === question.correct) {
-        buttons[index].classList.add('correct', 'border-green-500', 'ring-green-500'); 
+        buttons[index].classList.add('correct', 'border-green-500', 'ring-green-500');
         buttons[index].classList.remove('hover:bg-gray-50', 'dark:hover:bg-gray-800');
         correctAnswers++;
-        
+
         let pointsEarned = (SCORING && SCORING.BASE_POINTS) || 10;
         let currentQuestionTimeBonus = 0;
 
@@ -496,7 +515,7 @@ function selectAnswer(index) {
             currentQuestionTimeBonus = Math.floor(pointsEarned * (SCORING.TIME_BONUS_MULTIPLIER || 0.5) * timeRatio);
         }
         pointsEarned += currentQuestionTimeBonus;
-        totalTimeBonus += currentQuestionTimeBonus; 
+        totalTimeBonus += currentQuestionTimeBonus;
 
         streak++;
         let currentQuestionStreakBonus = 0;
@@ -505,25 +524,25 @@ function selectAnswer(index) {
             else if (streak === 5 && SCORING.STREAK_BONUS[5]) currentQuestionStreakBonus = SCORING.STREAK_BONUS[5];
         }
         pointsEarned += currentQuestionStreakBonus;
-        totalStreakBonus += currentQuestionStreakBonus; 
+        totalStreakBonus += currentQuestionStreakBonus;
 
         if (isDoublePointsActive) {
             pointsEarned *= 2;
-            isDoublePointsActive = false; 
+            isDoublePointsActive = false;
             const doublePtsBtn = document.getElementById('double-points-button');
             if (doublePtsBtn) {
-                 doublePtsBtn.innerHTML = `<span>2️⃣</span><span>2x Pts (${powerUps.doublePoints || 0})</span>`;
-                 if ((powerUps.doublePoints || 0) === 0) doublePtsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                doublePtsBtn.innerHTML = `<span>2️⃣</span><span>2x Pts (${powerUps.doublePoints || 0})</span>`;
+                if ((powerUps.doublePoints || 0) === 0) doublePtsBtn.classList.add('opacity-50', 'cursor-not-allowed');
             }
         }
-        
+
         score += pointsEarned;
         if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score} (+${pointsEarned})`;
         if (sounds && sounds.correct) sounds.correct.play();
         if (streak >= 3) showStreakMessage(streak);
 
     } else {
-        buttons[index].classList.add('wrong', 'border-red-500', 'ring-red-500'); 
+        buttons[index].classList.add('wrong', 'border-red-500', 'ring-red-500');
         buttons[index].classList.remove('hover:bg-gray-50', 'dark:hover:bg-gray-800');
         if (buttons[question.correct]) {
             buttons[question.correct].classList.add('correct', 'border-green-500');
@@ -534,12 +553,16 @@ function selectAnswer(index) {
         if (sounds && sounds.wrong) sounds.wrong.play();
         if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
     }
-    
+
     const nextBtn = document.getElementById('next-question-button-element');
-    if (nextBtn) nextBtn.classList.remove('hidden');
+    if (nextBtn) {
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        newNextBtn.addEventListener('click', showNextQuestion);
+        newNextBtn.classList.remove('hidden');
+    }
 }
 
-// ... (showNextQuestion function remains the same)
 function showNextQuestion() {
     currentQuestionIndex++;
     if (currentQuestionIndex < currentQuiz.length) {
@@ -553,9 +576,9 @@ function endQuiz() {
     stopTimer();
     const finalScore = score;
     const accuracy = currentQuiz.length > 0 ? Math.round((correctAnswers / currentQuiz.length) * 100) : 0;
-    const timeTakenValue = (currentQuiz.length * 15) - (userAnswers.reduce((acc, _, idx) => acc + (15 - (userAnswers[idx] !== undefined ? timeLeft : 0)), 0)); // Simplified time taken, needs refinement
+    const timeTakenValue = (currentQuiz.length * 15) - (userAnswers.reduce((acc, _, idx) => acc + (15 - (userAnswers[idx] !== undefined ? timeLeft : 0)), 0));
 
-    if (userProfile.username) { 
+    if (userProfile.username) {
         userProfile.totalQuizzes = (userProfile.totalQuizzes || 0) + 1;
         userProfile.totalScore = (userProfile.totalScore || 0) + finalScore;
         userProfile.highestScore = Math.max(userProfile.highestScore || 0, finalScore);
@@ -576,13 +599,34 @@ function endQuiz() {
             accuracy: accuracy,
             theme: quizTheme,
             level: quizLevel,
+            timeTaken: timeTakenValue,
             date: new Date().toISOString()
         };
         userProfile.recentActivity = userProfile.recentActivity || [];
         userProfile.recentActivity.unshift({ type: 'quiz', score: finalScore, theme: quizTheme, level: quizLevel, date: new Date().toISOString() });
         if (userProfile.recentActivity.length > 20) userProfile.recentActivity = userProfile.recentActivity.slice(0, 20);
-        
+
         localStorage.setItem('userProfile', JSON.stringify(userProfile));
+
+        checkForBadges();
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const isChallenge = urlParams.get('challenge') === 'true';
+
+        if (isChallenge) {
+            if (window.streakManager) {
+                window.streakManager.completeChallenge({
+                    score: finalScore,
+                    correctAnswers: correctAnswers,
+                    incorrectAnswers: incorrectAnswers,
+                    accuracy: accuracy,
+                    theme: quizTheme,
+                    level: quizLevel
+                });
+            } else {
+                console.error('streakManager not available for challenge completion');
+            }
+        }
     }
 
     showResultsPage(finalScore, correctAnswers, incorrectAnswers, accuracy, totalTimeBonus, timeTakenValue);
@@ -590,148 +634,153 @@ function endQuiz() {
 
 function showResultsPage(finalScoreVal, correct, incorrect, acc, timeBonusVal, timeTakenVal) {
     if (finalScoreDisplay) finalScoreDisplay.textContent = String(finalScoreVal);
-    if (correctAnswersDisplayResults) correctAnswersDisplayResults.textContent = `${correct}/${currentQuiz.length}`; // Show as X/Y
-    // incorrectAnswersDisplayResults is not a separate element in the current HTML structure for results
+    if (correctAnswersDisplayResults) correctAnswersDisplayResults.textContent = `${correct}/${currentQuiz.length}`;
     if (accuracyDisplayResults) accuracyDisplayResults.textContent = String(acc) + '%';
-    // The element 'time-taken' was used for totalTimeBonusDisplayResults. Assuming it should show time taken.
-    if (totalTimeBonusDisplayResults) totalTimeBonusDisplayResults.textContent = `${timeTakenVal}s`; // Display time taken
-    // If you want to show time bonus separately, you'll need another element in HTML and update here.
+    if (totalTimeBonusDisplayResults) totalTimeBonusDisplayResults.textContent = `${timeTakenVal}s`;
 
     const resultsUsernameSpan = document.getElementById('results-username');
     if (resultsUsernameSpan && userProfile && userProfile.username) {
         resultsUsernameSpan.textContent = userProfile.username;
     } else if (resultsUsernameSpan) {
-        resultsUsernameSpan.textContent = "Guest"; // Fallback if username is not found
+        resultsUsernameSpan.textContent = "Guest";
     }
 
     showContainer(resultsPage);
 }
 
-// ... (Power-up functions useHint, useSkip, useTimeFreeze, useDoublePoints remain largely the same)
-function useHint() {
-    if (hintsAvailable > 0) {
-        hintsAvailable--;
-        hintsUsed++;
-        if (PENALTIES && PENALTIES.HINT) score -= PENALTIES.HINT;
-        
-        const scoreDisplay = document.getElementById('score');
-        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
-        
-        const question = currentQuiz[currentQuestionIndex];
-        const optionsContainer = document.getElementById('options-container-element');
-        if (optionsContainer) {
-            const optionButtons = optionsContainer.querySelectorAll('.option-button:not(:disabled)');
-            let wrongOptions = [];
-            optionButtons.forEach((btn, idx) => {
-                // Assuming options are indexed 0, 1, 2, 3 and question.correct is the index of correct answer
-                const optionText = btn.textContent.trim();
-                if (optionText !== question.options[question.correct]) wrongOptions.push(btn);
-            });
+function checkForBadges() {
+    if (!userProfile || !userProfile.username) return;
 
-            // Remove two wrong options
-            let removedCount = 0;
-            while(removedCount < 2 && wrongOptions.length > 0){
-                const randomIndex = Math.floor(Math.random() * wrongOptions.length);
-                const btnToDisable = wrongOptions.splice(randomIndex, 1)[0];
-                if(btnToDisable){ // Check if button exists
-                    btnToDisable.classList.add('opacity-50', 'pointer-events-none', 'bg-gray-300', 'dark:bg-gray-600');
-                    btnToDisable.disabled = true;
-                    removedCount++;
-                }
-            }
-        }
-        
-        const hintBtn = document.getElementById('hint-button');
-        if (hintBtn) {
-            hintBtn.innerHTML = `<span>💡</span><span>Hint (${hintsAvailable})</span>`;
-            if (hintsAvailable === 0) {
-                hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                hintBtn.disabled = true;
-            }
+    if (!userProfile.achievements) {
+        userProfile.achievements = [];
+    }
+
+    checkQuizCountBadges();
+    checkScoreTotalBadges();
+    checkSingleScoreBadges();
+    checkSpecialBadges();
+
+    localStorage.setItem('userProfile', JSON.stringify(userProfile));
+}
+
+function checkQuizCountBadges() {
+    const quizCount = userProfile.totalQuizzes;
+
+    if (quizCount >= 1 && !userHasBadge('first_quiz')) {
+        awardBadge('first_quiz');
+    }
+
+    if (quizCount >= 5 && !userHasBadge('quiz_5')) {
+        awardBadge('quiz_5');
+    }
+
+    if (quizCount >= 10 && !userHasBadge('quiz_10')) {
+        awardBadge('quiz_10');
+    }
+
+    if (quizCount >= 25 && !userHasBadge('quiz_25')) {
+        awardBadge('quiz_25');
+    }
+}
+
+function checkScoreTotalBadges() {
+    const totalScore = userProfile.totalScore;
+
+    if (totalScore >= 100 && !userHasBadge('score_100')) {
+        awardBadge('score_100');
+    }
+
+    if (totalScore >= 500 && !userHasBadge('score_500')) {
+        awardBadge('score_500');
+    }
+
+    if (totalScore >= 1000 && !userHasBadge('score_1000')) {
+        awardBadge('score_1000');
+    }
+}
+
+function checkSingleScoreBadges() {
+    if (!userProfile.lastQuiz) return;
+
+    const lastQuizScore = userProfile.lastQuiz.score;
+    const lastQuizAccuracy = userProfile.lastQuiz.accuracy;
+
+    if (lastQuizAccuracy === 100 && !userHasBadge('perfect_quiz')) {
+        awardBadge('perfect_quiz');
+    }
+
+    if (lastQuizScore >= 50 && !userHasBadge('high_score_50')) {
+        awardBadge(audioWorkletNode('high_score_50'));
+    }
+}
+
+function checkSpecialBadges() {
+    if (!userProfile.lastQuiz) return;
+
+    if (userProfile.lastQuiz.timeTaken && userProfile.lastQuiz.timeTaken <= 270) {
+        if (!userHasBadge('speed_demon')) {
+            awardBadge('speed_demon');
         }
     }
 }
 
-function useSkip() {
-    if (powerUps.skip > 0) {
-        powerUps.skip--;
-        powerUpsUsed++;
-        skippedQuestions++;
-        if (PENALTIES && PENALTIES.SKIP) score -= PENALTIES.SKIP;
-
-        const scoreDisplay = document.getElementById('score');
-        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
-        
-        stopTimer();
-        showNextQuestion();
-        
-        const skipBtn = document.getElementById('skip-button');
-        if (skipBtn) {
-            skipBtn.innerHTML = `<span>⏩</span><span>Skip (${powerUps.skip})</span>`;
-            if (powerUps.skip === 0) {
-                skipBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                skipBtn.disabled = true;
-            }
-        }
-    }
+function userHasBadge(badgeId) {
+    return userProfile.achievements && userProfile.achievements.includes(badgeId);
 }
 
-function useTimeFreeze() {
-    if (powerUps.timeFreeze > 0) {
-        powerUps.timeFreeze--;
-        powerUpsUsed++;
-        if (PENALTIES && PENALTIES.TIME_FREEZE) score -= PENALTIES.TIME_FREEZE;
-        
-        const scoreDisplay = document.getElementById('score');
-        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
-        
-        timeLeft += 10; // Add 10 seconds to the current timer
-        const timerDisplay = document.getElementById('timer');
-        if(timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
-        // Timer continues, just with more time. No need to stop and restart unless specific behavior is desired.
-        alert("10 seconds added to the timer!");
+function awardBadge(badgeId) {
+    userProfile.achievements.push(badgeId);
 
-        const freezeBtn = document.getElementById('time-freeze-button');
-        if (freezeBtn) {
-            freezeBtn.innerHTML = `<span>⏸️</span><span>Freeze (${powerUps.timeFreeze})</span>`;
-            if (powerUps.timeFreeze === 0) {
-                freezeBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                freezeBtn.disabled = true;
-            }
+    let badge = null;
+
+    for (const category in BADGES) {
+        if (BADGES[category][badgeId]) {
+            badge = BADGES[category][badgeId];
+            break;
         }
     }
-}
 
-function useDoublePoints() {
-     if (powerUps.doublePoints > 0) {
-        powerUps.doublePoints--;
-        powerUpsUsed++;
-        if (PENALTIES && PENALTIES.DOUBLE_POINTS) score -= PENALTIES.DOUBLE_POINTS; 
-        
-        const scoreDisplay = document.getElementById('score');
-        if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
-        
-        isDoublePointsActive = true;
-        alert("Double Points activated for the next correct answer!");
+    if (!badge) return;
 
-        const doublePtsBtn = document.getElementById('double-points-button');
-        if (doublePtsBtn) {
-            doublePtsBtn.innerHTML = `<span>2️⃣</span><span>2x Pts (${powerUps.doublePoints})</span>`;
-            if (powerUps.doublePoints === 0) {
-                doublePtsBtn.classList.add('opacity-50', 'cursor-not-allowed');
-                doublePtsBtn.disabled = true;
-            }
-        }
+    userProfile.recentActivity.unshift({
+        type: 'achievement',
+        date: new Date().toISOString(),
+        description: `Earned "${badge.title}" badge!`,
+        achievementName: badge.title
+    });
+
+    if (userProfile.recentActivity.length > 20) {
+        userProfile.recentActivity = userProfile.recentActivity.slice(0, 20);
     }
+
+    showBadgeNotification(badge);
 }
 
-// Theme toggle functions
+function showBadgeNotification(badge) {
+    const badgeNotification = document.getElementById('badge-notification');
+    if (!badgeNotification) return;
+
+    const badgeEmoji = document.getElementById('badge-emoji');
+    const badgeTitle = document.getElementById('badge-title');
+    const badgeDescription = document.getElementById('badge-description');
+
+    badgeEmoji.textContent = badge.emoji;
+    badgeTitle.textContent = `New Badge: ${badge.title}`;
+    badgeDescription.textContent = badge.description;
+
+    badgeNotification.classList.remove('translate-x-full');
+
+    setTimeout(() => {
+        badgeNotification.classList.add('translate-x-full');
+    }, 5000);
+}
+
 function initializeTheme() {
     const themeToggleIcon = document.getElementById('theme-toggle-icon');
     const sunIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-15.66l-.707.707M4.04 19.96l-.707.707M21 12h-1M4 12H3m15.66 8.66l-.707-.707M4.04 4.04l-.707-.707" />`;
     const moonIcon = `<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />`;
 
-    if (localStorage.getItem('theme') === 'dark' || 
+    if (localStorage.getItem('theme') === 'dark' ||
         (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
         document.documentElement.classList.add('dark');
         document.body.classList.add('dark-theme');
@@ -761,7 +810,35 @@ function toggleTheme() {
     }
 }
 
-// Utility functions (resetQuizState, startTimer, stopTimer, handleTimeUp, showStreakMessage)
+function initializeTabSystem() {
+    const quizTabBtn = document.getElementById('quiz-tab-btn');
+    const dailyTabBtn = document.getElementById('daily-tab-btn');
+    const streakTabBtn = document.getElementById('streak-tab-btn');
+
+    const quizTabContent = document.getElementById('quiz-tab-content');
+    const dailyTabContent = document.getElementById('daily-tab-content');
+    const streakTabContent = document.getElementById('streak-tab-content');
+
+    if (!quizTabBtn || !dailyTabBtn || !streakTabBtn) return;
+
+    const switchTab = (activeTab, activeContent) => {
+        [quizTabBtn, dailyTabBtn, streakTabBtn].forEach(tab => {
+            tab.classList.remove('active');
+        });
+
+        [quizTabContent, dailyTabContent, streakTabContent].forEach(content => {
+            content.classList.add('hidden');
+        });
+
+        activeTab.classList.add('active');
+        activeContent.classList.remove('hidden');
+    };
+
+    quizTabBtn.addEventListener('click', () => switchTab(quizTabBtn, quizTabContent));
+    dailyTabBtn.addEventListener('click', () => switchTab(dailyTabBtn, dailyTabContent));
+    streakTabBtn.addEventListener('click', () => switchTab(streakTabBtn, streakTabContent));
+}
+
 function resetQuizState() {
     currentQuestionIndex = 0;
     score = 0;
@@ -779,22 +856,26 @@ function resetQuizState() {
     totalStreakBonus = 0;
     isDoublePointsActive = false;
     stopTimer();
-    // Reset UI elements if necessary (e.g., progress bar, score display on quiz page)
     const scoreDisplay = document.getElementById('score');
     if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: 0`;
     const timerDisplay = document.getElementById('timer');
     if(timerDisplay) timerDisplay.textContent = `⏱️ Time: 15s`;
-    updateProgressBar(); 
+    updateProgressBar();
 }
 
 function startTimer() {
     timeLeft = 15;
     const timerDisplay = document.getElementById('timer');
-    if(timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+    if (timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+
+    stopTimer(); // Ensure no existing timers are running
 
     timer = setInterval(() => {
         timeLeft--;
-        if(timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+        if (timerDisplay) {
+            timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+            timerDisplay.classList.toggle('text-red-500', timeLeft <= 5); // Visual cue for low time
+        }
         if (timeLeft <= 0) {
             stopTimer();
             handleTimeUp();
@@ -803,29 +884,47 @@ function startTimer() {
 }
 
 function stopTimer() {
-    clearInterval(timer);
+    if (timer) {
+        clearInterval(timer);
+        timer = null;
+    }
 }
 
 function handleTimeUp() {
     if (sounds && sounds.timeup) sounds.timeup.play();
-    // Mark question as incorrect or skipped due to time up
-    incorrectAnswers++; // Or a new category like timeOutAnswers
+
+    incorrectAnswers++;
     streak = 0;
-    
+
+    userAnswers[currentQuestionIndex] = undefined;
+
     const quizOptionsContainer = document.getElementById('options-container-element');
     if (quizOptionsContainer) {
         const buttons = quizOptionsContainer.querySelectorAll('.option-button');
         buttons.forEach(button => button.disabled = true);
-        // Optionally show correct answer
+
         const question = currentQuiz[currentQuestionIndex];
-        if (buttons[question.correct]) {
+        if (question && buttons[question.correct]) {
             buttons[question.correct].classList.add('correct', 'border-green-500');
+            buttons[question.correct].classList.remove('hover:bg-gray-50', 'dark:hover:bg-gray-800');
         }
     }
-    
+
+    const questionElement = document.getElementById('question-text-element');
+    if (questionElement) {
+        const timeUpMessage = document.createElement('div');
+        timeUpMessage.textContent = "Time's up!";
+        timeUpMessage.className = 'text-red-500 font-bold mb-2 text-center';
+        questionElement.parentNode.insertBefore(timeUpMessage, questionElement);
+    }
+
     const nextBtn = document.getElementById('next-question-button-element');
-    if (nextBtn) nextBtn.classList.remove('hidden');
-    // alert("Time's up!"); // Optional alert
+    if (nextBtn) {
+        const newNextBtn = nextBtn.cloneNode(true);
+        nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
+        newNextBtn.addEventListener('click', showNextQuestion);
+        newNextBtn.classList.remove('hidden');
+    }
 }
 
 function showStreakMessage(streakCount) {
@@ -840,13 +939,118 @@ function showStreakMessage(streakCount) {
     }, 3000);
 }
 
+function useHint() {
+    if (hintsAvailable <= 0) return;
+
+    const question = currentQuiz[currentQuestionIndex];
+    const incorrectOptions = question.options
+        .map((option, index) => ({ option, index }))
+        .filter((_, index) => index !== question.correct);
+
+    const optionsToRemove = incorrectOptions
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 2)
+        .map(item => item.index);
+
+    const buttons = document.querySelectorAll('.option-button');
+    buttons.forEach((button, index) => {
+        if (optionsToRemove.includes(index)) {
+            button.disabled = true;
+            button.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+
+    hintsAvailable--;
+    hintsUsed++;
+    score = Math.max(0, score - PENALTIES.HINT);
+
+    const hintBtn = document.getElementById('hint-button');
+    if (hintBtn) {
+        hintBtn.innerHTML = `<span>💡</span><span>Hint (${hintsAvailable})</span>`;
+        if (hintsAvailable === 0) {
+            hintBtn.disabled = true;
+            hintBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    const scoreDisplay = document.getElementById('score');
+    if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+}
+
+function useSkip() {
+    if (powerUps.skip <= 0) return;
+
+    powerUps.skip--;
+    powerUpsUsed++;
+    skippedQuestions++;
+    score = Math.max(0, score - PENALTIES.SKIP);
+
+    const skipBtn = document.getElementById('skip-button');
+    if (skipBtn) {
+        skipBtn.innerHTML = `<span>⏩</span><span>Skip (${powerUps.skip})</span>`;
+        if (powerUps.skip === 0) {
+            skipBtn.disabled = true;
+            skipBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    const scoreDisplay = document.getElementById('score');
+    if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+
+    showNextQuestion();
+}
+
+function useTimeFreeze() {
+    if (powerUps.timeFreeze <= 0) return;
+
+    powerUps.timeFreeze--;
+    powerUpsUsed++;
+    score = Math.max(0, score - PENALTIES.TIME_FREEZE);
+
+    timeLeft += 10;
+    const timerDisplay = document.getElementById('timer');
+    if (timerDisplay) timerDisplay.textContent = `⏱️ Time: ${timeLeft}s`;
+
+    const freezeBtn = document.getElementById('time-freeze-button');
+    if (freezeBtn) {
+        freezeBtn.innerHTML = `<span>⏸️</span><span>Freeze (${powerUps.timeFreeze})</span>`;
+        if (powerUps.timeFreeze === 0) {
+            freezeBtn.disabled = true;
+            freezeBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    const scoreDisplay = document.getElementById('score');
+    if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+}
+
+function useDoublePoints() {
+    if (powerUps.doublePoints <= 0) return;
+
+    powerUps.doublePoints--;
+    powerUpsUsed++;
+    score = Math.max(0, score - PENALTIES.DOUBLE_POINTS);
+    isDoublePointsActive = true;
+
+    const doublePtsBtn = document.getElementById('double-points-button');
+    if (doublePtsBtn) {
+        doublePtsBtn.innerHTML = `<span>2️⃣</span><span>2x Pts (${powerUps.doublePoints})</span>`;
+        if (powerUps.doublePoints === 0) {
+            doublePtsBtn.disabled = true;
+            doublePtsBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    }
+
+    const scoreDisplay = document.getElementById('score');
+    if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
     initializeDOMElements();
-    initializeTheme(); 
-    loadUserProfile(); 
-    // Removed initializeLeaderboard call
-    
+    initializeTheme();
+    loadUserProfile();
+    initializeTabSystem();
+
     if (landingPage) {
         showContainer(landingPage);
     } else {

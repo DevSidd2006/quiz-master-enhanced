@@ -1,0 +1,266 @@
+/* Style for the streak tracking and daily challenges */
+
+/* Streak Counter */
+#streak-display {
+    position: relative;
+    overflow: hidden;
+}
+
+#streak-display::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, rgba(255, 215, 0, 0.2), rgba(255, 69, 0, 0.2));
+    z-index: -1;
+}
+
+#current-streak {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+/* Streak Calendar */
+#streak-calendar {
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(5px);
+    border-radius: 1rem;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 500;
+    border-radius: 50%;
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.calendar-day:hover {
+    transform: scale(1.05);
+}
+
+.calendar-day-header {
+    font-weight: 600;
+    color: #6366f1;
+    text-align: center;
+    padding-bottom: 0.5rem;
+}
+
+/* Calendar Day States */
+.calendar-day.today {
+    border: 2px solid #6366f1;
+    box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.3);
+}
+
+.calendar-day.streak {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: white;
+    box-shadow: 0 2px 4px rgba(245, 158, 11, 0.3);
+}
+
+.calendar-day.streak::after {
+    content: "🔥";
+    position: absolute;
+    font-size: 0.5rem;
+    top: -0.25rem;
+    right: -0.25rem;
+}
+
+.calendar-day.completed {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 2px 4px rgba(5, 150, 105, 0.3);
+}
+
+.calendar-day.completed::after {
+    content: "✓";
+    position: absolute;
+    font-size: 0.75rem;
+    bottom: -0.25rem;
+    right: -0.25rem;
+    background-color: white;
+    color: #059669;
+    border-radius: 50%;
+    height: 1rem;
+    width: 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.calendar-day.active {
+    background-color: #6366f1;
+    color: white;
+    box-shadow: 0 2px 10px rgba(99, 102, 241, 0.4);
+}
+
+.calendar-day.completed {
+    background-color: #10b981;
+    color: white;
+    box-shadow: 0 2px 10px rgba(16, 185, 129, 0.4);
+}
+
+.calendar-day.streak {
+    background-color: #f59e0b;
+    color: white;
+    box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4);
+}
+
+.calendar-day.today {
+    border: 2px solid #6366f1;
+    font-weight: 700;
+}
+
+/* Challenge Status */
+#challenge-status {
+    transition: all 0.3s ease;
+}
+
+#challenge-status.completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+#challenge-status.in-progress {
+    background-color: #e0f2fe;
+    color: #0369a1;
+}
+
+/* Flame animation for streak icon */
+@keyframes flicker {
+    0% { transform: rotate(-1deg) scale(0.97); }
+    25% { transform: rotate(0deg) scale(1); }
+    50% { transform: rotate(1deg) scale(1.03); }
+    75% { transform: rotate(0deg) scale(1.01); }
+    100% { transform: rotate(-1deg) scale(0.97); }
+}
+
+#streak-display svg {
+    animation: flicker 3s infinite ease-in-out;
+    transform-origin: center;
+}
+
+/* Tab System Styles */
+.tab-button {
+    background-color: rgba(255, 255, 255, 0.7);
+    color: #4b5563;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tab-button.active {
+    background-color: #6366f1;
+    color: white;
+    box-shadow: 0 4px 6px rgba(99, 102, 241, 0.25);
+    transform: translateY(-2px);
+}
+
+.dark-theme .tab-button {
+    background-color: rgba(55, 65, 81, 0.7);
+    color: #d1d5db;
+}
+
+.dark-theme .tab-button.active {
+    background-color: #818cf8;
+    color: white;
+}
+
+/* Badge Notification Styles */
+#badge-notification {
+    z-index: 999;
+    transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Challenge Status Indicators */
+.challenge-status.in-progress {
+    animation: pulse 2s infinite;
+}
+
+.challenge-status.completed {
+    animation: none;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Streak Animations */
+@keyframes fireAnimation {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.streak-animation {
+    animation: fireAnimation 2s infinite;
+}
+
+/* Streak tab styles */
+#streak-tab-display {
+    transition: all 0.3s ease;
+}
+
+#streak-tab-display:hover {
+    transform: scale(1.05);
+}
+
+/* Daily Challenge Card */
+.challenge-card {
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.challenge-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(to right, #fbbf24, #f59e0b);
+    border-radius: 2px 2px 0 0;
+}
+
+.challenge-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Responsive Adjustments */
+@media (max-width: 640px) {
+    .calendar-day {
+        height: 2rem;
+        width: 2rem;
+        font-size: 0.875rem;
+    }
+    
+    .calendar-day-header {
+        font-size: 0.75rem;
+    }
+    
+    #streak-tab-display {
+        padding: 1rem;
+    }
+}

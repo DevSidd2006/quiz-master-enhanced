@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Challenges | QuizMaster</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="streak.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="./images/logo.png" type="image/png">
+</head>
+<body>
+    <!-- Theme Changer Floating Button -->
+    <button id="theme-changer-btn" title="Toggle Theme" class="fixed bottom-8 right-8 z-50 bg-gradient-to-r from-indigo-500 to-purple-500 text-white p-4 rounded-full shadow-xl hover:from-indigo-600 hover:to-purple-600 transition-all duration-300 flex items-center justify-center focus:outline-none">
+        <svg id="theme-changer-icon" xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path id="theme-changer-icon-path" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.66 5.66l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+        </svg>
+    </button>
+
+    <!-- Navigation Bar -->
+    <nav class="fixed top-0 left-0 right-0 bg-white dark:bg-gray-800 shadow-md z-10">
+        <div class="container mx-auto px-4 py-2">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="flex items-center">
+                    <img src="./images/logo.png" alt="QuizMaster Logo" class="h-10 w-10 mr-3">
+                    <span class="text-xl font-bold text-indigo-600 dark:text-indigo-400">QuizMaster</span>
+                </a>
+                <div class="flex items-center space-x-4">
+                    <a href="index.html" class="font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Home</a>
+                    <a href="daily-challenges.html" class="font-medium text-indigo-600 dark:text-indigo-400">Challenges</a>
+                    <a href="profile.html" class="font-medium text-gray-700 dark:text-gray-300 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">Profile</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="w-full max-w-4xl mx-auto mt-8 mb-12 px-4">
+        <div class="glass-card p-8 md:p-12">
+            <!-- Daily Challenge Header -->
+            <div class="flex flex-col md:flex-row items-center justify-between mb-8">
+                <div>
+                    <h2 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Daily Challenges</h2>
+                    <p class="text-gray-600 dark:text-gray-300">Complete daily challenges to maintain your streak and earn special badges!</p>
+                </div>
+                <div class="mt-4 md:mt-0">
+                    <div id="streak-display" class="flex items-center justify-center bg-gradient-to-r from-amber-400 to-orange-500 text-white rounded-lg p-4 shadow-lg">
+                        <div class="flex flex-col items-center">
+                            <div class="flex items-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1012.015 11L11 14H9c0 .768.293 1.536.879 2.121z" />
+                                </svg>
+                                <span class="text-xl font-bold">Streak</span>
+                            </div>
+                            <span id="current-streak" class="text-3xl font-bold">0</span>
+                            <span class="text-sm">days</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Streak Calendar -->
+            <div class="mb-8">
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Your Streak Calendar</h3>
+                <div id="streak-calendar" class="grid grid-cols-7 gap-2">
+                    <!-- Calendar days will be added dynamically -->
+                </div>
+            </div>
+
+            <!-- Today's Challenge -->
+            <div class="bg-white dark:bg-gray-700 rounded-xl shadow-md p-6 mb-8">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white">Today's Challenge</h3>
+                    <span id="challenge-status" class="px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">Pending</span>
+                </div>
+                <div id="daily-challenge-content">
+                    <p class="text-gray-600 dark:text-gray-300 mb-4" id="challenge-description">Complete a quiz in the "Science" category with at least 80% accuracy.</p>
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Difficulty:</span>
+                            <span id="challenge-difficulty" class="ml-2 font-medium text-indigo-600 dark:text-indigo-400">Medium</span>
+                        </div>
+                        <div>
+                            <span class="text-sm text-gray-500 dark:text-gray-400">Reward:</span>
+                            <span id="challenge-reward" class="ml-2 font-medium text-green-600 dark:text-green-400">+50 points</span>
+                        </div>
+                    </div>
+                    <button id="start-challenge-btn" class="mt-6 w-full bg-gradient-to-r from-indigo-500 to-purple-500 hover:from-indigo-600 hover:to-purple-600 text-white font-bold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd" />
+                        </svg>
+                        Accept Challenge
+                    </button>
+                </div>
+            </div>
+
+            <!-- Upcoming Challenges -->
+            <div>
+                <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-4">Upcoming Challenges</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4 opacity-75">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-medium text-gray-800 dark:text-white">Tomorrow</h4>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Locked</span>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Complete tomorrow's challenge to continue your streak!</p>
+                    </div>
+                    <div class="bg-white dark:bg-gray-700 rounded-lg shadow p-4 opacity-75">
+                        <div class="flex items-center justify-between mb-2">
+                            <h4 class="font-medium text-gray-800 dark:text-white">Day After Tomorrow</h4>
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Locked</span>
+                        </div>
+                        <p class="text-gray-600 dark:text-gray-400 text-sm">Maintain your streak for special rewards!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Streak Achievements -->
+        <div class="glass-card p-8 md:p-12 mt-8">
+            <h3 class="text-2xl font-bold text-gray-800 dark:text-white mb-6">Streak Achievements</h3>
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="achievement-card" id="achievement-streak-3">
+                    <div class="achievement-icon">🔥</div>
+                    <h4 class="font-semibold mb-1">Spark</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">3-day streak</p>
+                </div>
+                <div class="achievement-card locked" id="achievement-streak-7">
+                    <div class="achievement-icon">🔥</div>
+                    <h4 class="font-semibold mb-1">Ignite</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">7-day streak</p>
+                </div>
+                <div class="achievement-card locked" id="achievement-streak-14">
+                    <div class="achievement-icon">🔥</div>
+                    <h4 class="font-semibold mb-1">Blaze</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">14-day streak</p>
+                </div>
+                <div class="achievement-card locked" id="achievement-streak-30">
+                    <div class="achievement-icon">🔥</div>
+                    <h4 class="font-semibold mb-1">Inferno</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">30-day streak</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Badge notification -->
+    <div id="badge-notification" class="fixed top-24 right-4 bg-white dark:bg-gray-800 rounded-lg shadow-xl p-4 w-72 z-50 transform translate-x-full transition-transform duration-500 flex items-center">
+        <div class="bg-indigo-100 dark:bg-indigo-900 rounded-full p-3 mr-4">
+            <span id="badge-emoji" class="text-2xl">🏆</span>
+        </div>
+        <div>
+            <h4 id="badge-title" class="font-bold text-gray-900 dark:text-white">New Badge Earned!</h4>
+            <p id="badge-description" class="text-sm text-gray-600 dark:text-gray-300">You've completed your first quiz!</p>
+        </div>
+    </div>    <script src="script.js" type="module"></script>
+    <script src="streak.js" type="module"></script>
+    <script>
+        // Make sure event listeners are set up properly when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            // Set up the start challenge button
+            const startChallengeBtn = document.getElementById('start-challenge-btn');
+            if (startChallengeBtn) {
+                startChallengeBtn.addEventListener('click', () => {
+                    if (window.streakManager) {
+                        window.streakManager.startChallenge();
+                    } else {
+                        console.error("streakManager not found");
+                        alert("Could not start challenge. Please try again later.");
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>
