@@ -555,12 +555,19 @@ function selectAnswer(index) {
         if (scoreDisplay) scoreDisplay.textContent = `🏆 Score: ${score}`;
     }
 
+    // Show Next button only if not last question, otherwise submit quiz
     const nextBtn = document.getElementById('next-question-button-element');
     if (nextBtn) {
         const newNextBtn = nextBtn.cloneNode(true);
         nextBtn.parentNode.replaceChild(newNextBtn, nextBtn);
-        newNextBtn.addEventListener('click', showNextQuestion);
-        newNextBtn.classList.remove('hidden');
+        if (currentQuestionIndex < currentQuiz.length - 1) {
+            newNextBtn.addEventListener('click', showNextQuestion);
+            newNextBtn.classList.remove('hidden');
+        } else {
+            newNextBtn.textContent = 'Submit Quiz';
+            newNextBtn.classList.remove('hidden');
+            newNextBtn.addEventListener('click', endQuiz);
+        }
     }
 }
 
